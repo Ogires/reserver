@@ -1,6 +1,5 @@
 import { IBookingRepository } from '../ports/IBookingRepository';
 import { Booking } from '../../domain/entities/Booking';
-import { Schedule } from '../../domain/entities/Schedule';
 
 export interface TimeSlot {
   startTime: Date;
@@ -11,53 +10,79 @@ export interface TimeSlot {
 export class CheckAvailabilityUseCase {
   constructor(private readonly bookingRepository: IBookingRepository) {}
 
-  /**
-   * Computes available slots for a given date, tenant, and service duration.
-   */
   public async execute(
     tenantId: string,
     serviceId: string,
     requestedDate: Date
   ): Promise<TimeSlot[]> {
-    // 1. Fetch the service to know its duration
-    const service = await this.bookingRepository.getServiceById(serviceId);
-    if (!service) {
-      throw new Error(`Service with ID ${serviceId} not found.`);
+    // 1. Fetch Tenant (for interval) and Service (for duration)
+    const [tenant, service] = await Promise.all([
+      this.bookingRepository.getTenantById(tenantId),
+      this.bookingRepository.getServiceById(serviceId)
+    ]);
+
+    if (!tenant) throw new Error(`Tenant ${tenantId} not found.`);
+    if (!service) throw new Error(`Service ${serviceId} not found.`);
+
+    const intervalMinutes = tenant.slotIntervalMinutes || 30;
+    const durationMinutes = service.durationMinutes;
+
+    // 2. Fetch Exceptions for date
+    const exceptions = await this.bookingRepository.getScheduleExceptionByDate(tenantId, requestedDate);
+    
+    let timeBlocks: { openTime: string, closeTime: string }[] = [];
+
+    if (exceptions.length > 0) {
+      // If there's an exception saying it's closed, then closed for the day
+      if (exceptions.some(e => e.isClosed)) {
+        return [];
+      }
+      
+      // Otherwise, use the exception's custom open/close times
+      timeBlocks = exceptions.filter(e => e.openTime && e.closeTime).map(e => ({
+        openTime: e.openTime!,
+        closeTime: e.closeTime!
+      }));
+    } else {
+      // 3. Fallback to normal schedules for this date
+      const schedules = await this.bookingRepository.getTenantSchedulesForDate(tenantId, requestedDate);
+      timeBlocks = schedules.map(s => ({
+        openTime: s.openTime,
+        closeTime: s.closeTime
+      }));
     }
 
-    // 2. Fetch the tenant's schedule to find opening/closing hours for this day of week
-    const targetDayOfWeek = requestedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const schedules = await this.bookingRepository.getTenantSchedule(tenantId);
-    const daySchedule = schedules.find(s => s.dayOfWeek === targetDayOfWeek);
-
-    if (!daySchedule) {
-      // Tenant is closed on this day
-      return [];
+    if (timeBlocks.length === 0) {
+      return []; // No shifts available today
     }
 
-    // 3. Fetch existing bookings for this tenant on this date
-    // (Assume getBookingsByDate returns bookings that overlap with the day)
-    const existingBookings = await this.bookingRepository.getBookingsByDate(tenantId, requestedDate);
+    // 4. Fetch Bookings for Date
+    const bookings = await this.bookingRepository.getBookingsByDate(tenantId, requestedDate);
 
-    // 4. Generate possible slots based on opening/closing time and service duration
-    const allSlots = this.generateSlots(requestedDate, daySchedule.openTime, daySchedule.closeTime, service.durationMinutes);
+    // 5. Generate and Filter Slots
+    const availableSlots: TimeSlot[] = [];
 
-    // 5. Filter out slots that overlap with existing bookings
-    const availableSlots = allSlots.filter(slot => !this.isOverlapping(slot, existingBookings));
+    for (const block of timeBlocks) {
+      const allSlots = this.generateSlots(requestedDate, block.openTime, block.closeTime, intervalMinutes, durationMinutes);
+      const openSlots = allSlots.filter(slot => !this.isOverlapping(slot, bookings));
+      availableSlots.push(...openSlots.map(s => ({ ...s, available: true })));
+    }
 
-    return availableSlots.map(slot => ({
-      ...slot,
-      available: true
-    }));
+    // Sort slots by time just in case blocks were unordered
+    availableSlots.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+
+    return availableSlots;
   }
 
-  /**
-   * Generates sequential time slots from open to close based on duration.
-   */
-  private generateSlots(date: Date, openTimeStr: string, closeTimeStr: string, durationMin: number): { startTime: Date, endTime: Date }[] {
+  private generateSlots(
+    date: Date, 
+    openTimeStr: string, 
+    closeTimeStr: string, 
+    intervalMin: number, 
+    durationMin: number
+  ): { startTime: Date, endTime: Date }[] {
     const slots = [];
     
-    // Parse 'HH:mm'
     const [openH, openM] = openTimeStr.split(':').map(Number);
     const [closeH, closeM] = closeTimeStr.split(':').map(Number);
 
@@ -72,30 +97,23 @@ export class CheckAvailabilityUseCase {
       const slotEnd = new Date(currentTime);
       slotEnd.setMinutes(slotEnd.getMinutes() + durationMin);
 
+      // If the slot extends past closing time, we stop generating
       if (slotEnd > closeTime) {
         break;
       }
 
       slots.push({ startTime: slotStart, endTime: slotEnd });
       
-      // Move to next slot start time (we assume back-to-back scheduling for simplicity, or 15min intervals)
-      // Let's use 15-minute standard increments for starting slots instead of jumping by full duration
-      // This allows more flexible fitting. But to keep it simple, we increment by the duration.
-      currentTime.setMinutes(currentTime.getMinutes() + durationMin);
+      // Move forward by the interval amount (e.g. 15 or 30 mins) instead of full duration
+      currentTime.setMinutes(currentTime.getMinutes() + intervalMin);
     }
 
     return slots;
   }
 
-  /**
-   * Checks if a proposed slot overlaps with any confirmed or pending bookings.
-   */
   private isOverlapping(slot: { startTime: Date, endTime: Date }, bookings: Booking[]): boolean {
     return bookings.some(booking => {
-      // If booking is cancelled, it doesn't block the slot
       if (booking.status === 'cancelled') return false;
-
-      // Overlap logic: Start A < End B AND End A > Start B
       return slot.startTime < booking.endTime && slot.endTime > booking.startTime;
     });
   }

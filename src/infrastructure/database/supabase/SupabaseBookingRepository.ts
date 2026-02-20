@@ -1,7 +1,9 @@
 import { IBookingRepository } from '../../../core/application/ports/IBookingRepository';
 import { Booking, BookingStatus, PaymentStatus } from '../../../core/domain/entities/Booking';
 import { Schedule } from '../../../core/domain/entities/Schedule';
+import { ScheduleException } from '../../../core/domain/entities/ScheduleException';
 import { Service } from '../../../core/domain/entities/Service';
+import { Tenant } from '../../../core/domain/entities/Tenant';
 import { supabase } from './supabase-client';
 
 export class SupabaseBookingRepository implements IBookingRepository {
@@ -27,17 +29,50 @@ export class SupabaseBookingRepository implements IBookingRepository {
     return (data || []).map(this.mapToBooking);
   }
 
-  async getTenantSchedule(tenantId: string): Promise<Schedule[]> {
+  async getTenantById(tenantId: string): Promise<Tenant | null> {
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', tenantId)
+      .single();
+
+    if (error || !data) return null;
+    return this.mapToTenant(data);
+  }
+
+  async getTenantSchedulesForDate(tenantId: string, date: Date): Promise<Schedule[]> {
+    const targetDayOfWeek = date.getDay(); // 0 = Sunday
+    const dateStr = date.toISOString().split('T')[0];
+
     const { data, error } = await supabase
       .from('schedules')
       .select('*')
-      .eq('tenant_id', tenantId);
+      .eq('tenant_id', tenantId)
+      .eq('day_of_week', targetDayOfWeek)
+      .lte('valid_from', dateStr)
+      .gte('valid_to', dateStr);
 
     if (error) {
-      throw new Error(`Error fetching schedule: ${error.message}`);
+      throw new Error(`Error fetching schedules: ${error.message}`);
     }
 
     return (data || []).map(this.mapToSchedule);
+  }
+
+  async getScheduleExceptionByDate(tenantId: string, date: Date): Promise<ScheduleException[]> {
+    const dateStr = date.toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('schedule_exceptions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('exception_date', dateStr);
+
+    if (error) {
+      throw new Error(`Error fetching schedule exceptions: ${error.message}`);
+    }
+
+    return (data || []).map(this.mapToScheduleException);
   }
 
   async getServiceById(serviceId: string): Promise<Service | null> {
@@ -100,8 +135,34 @@ export class SupabaseBookingRepository implements IBookingRepository {
       id: row.id,
       tenantId: row.tenant_id,
       dayOfWeek: row.day_of_week,
+      validFrom: row.valid_from,
+      validTo: row.valid_to,
       openTime: row.open_time,
       closeTime: row.close_time
+    };
+  }
+
+  private mapToScheduleException(row: any): ScheduleException {
+    return {
+      id: row.id,
+      tenantId: row.tenant_id,
+      exceptionDate: row.exception_date,
+      isClosed: row.is_closed,
+      openTime: row.open_time,
+      closeTime: row.close_time
+    };
+  }
+
+  private mapToTenant(row: any): Tenant {
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      preferredCurrency: row.preferred_currency,
+      defaultLanguage: row.default_language,
+      slotIntervalMinutes: row.slot_interval_minutes,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at)
     };
   }
 

@@ -6,6 +6,7 @@ export interface Tenant {
   slug: string;
   preferredCurrency: Currency;
   defaultLanguage: string;
+  slotIntervalMinutes: number; // NEW
   createdAt: Date;
   updatedAt: Date;
 }
