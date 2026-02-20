@@ -45,14 +45,14 @@ export async function signup(formData: FormData): Promise<void> {
   });
 
   if (error) {
+    if (error.message.includes('Email not confirmed')) {
+      redirect(`/admin/login?message=Almost there! Please check your email inbox to verify your account before signing in.`);
+    }
     redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
 
-  // If email confirmations are enabled and no session is started
-  if (!data?.session) {
-    redirect('/admin/login?message=Account created! Please check your email inbox to verify your account.');
-  }
-
+  // Assuming Email Confirmations are disabled directly in the Supabase Dashboard,
+  // we proceed directly to the onboarding step.
   redirect('/admin/onboarding');
 }
 
