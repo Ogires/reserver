@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { signout } from './actions';
+import { signout } from '../actions';
 
 export default function AdminLayout({
   children,

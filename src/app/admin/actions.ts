@@ -36,13 +36,18 @@ export async function signup(formData: FormData): Promise<void> {
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
 
   if (error) {
     redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // If email confirmations are enabled and no session is started
+  if (!data?.session) {
+    redirect('/admin/login?message=Account created! Please check your email inbox to verify your account.');
   }
 
   redirect('/admin/onboarding');

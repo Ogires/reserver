@@ -1,8 +1,8 @@
-import { requireTenant } from '../utils';
-import { createClient } from '../../../utils/supabase/server';
+import { requireTenant } from '../../utils';
+import { createClient } from '../../../../utils/supabase/server';
 import { createSchedule, deleteSchedule, createException, deleteException } from './actions';
-import { Schedule } from '../../../core/domain/entities/Schedule';
-import { ScheduleException } from '../../../core/domain/entities/ScheduleException';
+import { Schedule } from '../../../../core/domain/entities/Schedule';
+import { ScheduleException } from '../../../../core/domain/entities/ScheduleException';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

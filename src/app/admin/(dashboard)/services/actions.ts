@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '../../../utils/supabase/server';
-import { requireTenant } from '../utils';
+import { createClient } from '../../../../utils/supabase/server';
+import { requireTenant } from '../../utils';
 import { revalidatePath } from 'next/cache';
 
 export async function createService(formData: FormData) {

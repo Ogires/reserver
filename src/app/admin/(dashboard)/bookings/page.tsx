@@ -1,5 +1,5 @@
-import { requireTenant } from '../utils';
-import { createClient } from '../../../utils/supabase/server';
+import { requireTenant } from '../../utils';
+import { createClient } from '../../../../utils/supabase/server';
 
 export default async function BookingsPage() {
   const { tenant } = await requireTenant();

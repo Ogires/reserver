@@ -1,7 +1,7 @@
-import { requireTenant } from '../utils';
-import { createClient } from '../../../utils/supabase/server';
+import { requireTenant } from '../../utils';
+import { createClient } from '../../../../utils/supabase/server';
 import { createService, deleteService } from './actions';
-import { Service } from '../../../core/domain/entities/Service';
+import { Service } from '../../../../core/domain/entities/Service';
 
 export default async function ServicesPage() {
   const { tenant } = await requireTenant();
