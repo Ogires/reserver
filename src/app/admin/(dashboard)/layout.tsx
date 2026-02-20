@@ -1,11 +1,14 @@
 import Link from 'next/link';
 import { signout } from '../actions';
+import { requireTenant } from '../utils';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { tenant } = await requireTenant();
+
   return (
     <div className="min-h-screen bg-slate-950 flex selection:bg-indigo-500/30 text-slate-300 font-sans">
       
@@ -17,8 +20,8 @@ export default function AdminLayout({
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800/60 flex flex-col z-10">
         <div className="h-16 flex items-center px-6 border-b border-slate-800/60 content-center">
-          <div className="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_0_15px_rgba(99,102,241,0.3)] mr-3" />
-          <span className="text-lg font-bold text-white tracking-tight">Bookable Admin</span>
+          <div className="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_0_15px_rgba(99,102,241,0.3)] mr-3 flex-shrink-0" />
+          <span className="text-lg font-bold text-white tracking-tight truncate" title={tenant.name}>{tenant.name}</span>
         </div>
         
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -57,7 +60,17 @@ export default function AdminLayout({
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden z-10">
         <header className="h-16 flex items-center justify-between px-8 bg-slate-900/30 backdrop-blur-md border-b border-slate-800/60">
           <div className="flex items-center">
-            {/* Contextual Header can be injected here by pages */}
+            <a 
+              href={`/${tenant.slug}`} 
+              target="_blank" 
+              rel="noreferrer"
+              className="inline-flex items-center text-sm font-medium text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-full"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View Booking Page
+            </a>
           </div>
           <div className="flex items-center space-x-4">
             <button className="text-slate-400 hover:text-white transition-colors">

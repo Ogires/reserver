@@ -1,17 +1,34 @@
-export default function AdminDashboardPage() {
+import { requireTenant } from '../../utils';
+import { createClient } from '../../../../utils/supabase/server';
+
+export default async function AdminDashboardPage() {
+  const { tenant } = await requireTenant();
+  const supabase = await createClient();
+
+  // Fetch actual counts
+  const { count: bookingsCount } = await supabase
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('tenant_id', tenant.id);
+
+  const { count: servicesCount } = await supabase
+    .from('services')
+    .select('*', { count: 'exact', head: true })
+    .eq('tenant_id', tenant.id);
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       <div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight">Dashboard Overview</h1>
-        <p className="text-slate-400 mt-2">Welcome to your administration panel. Here's what's happening today.</p>
+        <p className="text-slate-400 mt-2">Welcome to the <strong className="text-indigo-400">{tenant.name}</strong> administration panel.</p>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Today's Bookings" value="12" trend="+14% from yesterday" trendUp />
-        <StatCard title="Upcoming Revenue" value="$450.00" trend="+5% from last week" trendUp />
-        <StatCard title="Active Services" value="8" trend="Unchanged" />
+        <StatCard title="Total Bookings" value={(bookingsCount || 0).toString()} trend="All time" trendUp />
+        <StatCard title="Upcoming Revenue" value="---" trend="Pending setup" />
+        <StatCard title="Active Services" value={(servicesCount || 0).toString()} trend="Configured" trendUp />
       </div>
 
       {/* Recent Bookings Placeholder */}
