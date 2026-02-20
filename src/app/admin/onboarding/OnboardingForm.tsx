@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { onboardTenant } from '../actions';
 
 export default function OnboardingForm() {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [isManualSlug, setIsManualSlug] = useState(false);
+  const [host, setHost] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHost(window.location.host + '/');
+    }
+  }, []);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
@@ -56,7 +63,7 @@ export default function OnboardingForm() {
           </label>
           <div className="flex relative items-stretch">
             <div className="left-0 flex items-center pointer-events-none text-slate-500 bg-slate-950/80 rounded-l-xl border border-slate-800 px-4 whitespace-nowrap">
-              reserver.com/
+              {host || 'reserver.app/'}
             </div>
             <input
               type="text"
