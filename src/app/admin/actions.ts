@@ -20,6 +20,9 @@ export async function login(formData: FormData): Promise<void> {
   });
 
   if (error) {
+    if (error.message.includes('Email not confirmed')) {
+      redirect(`/admin/login?message=Almost there! Please check your email inbox to verify your account before signing in.`);
+    }
     redirect(`/admin/login?error=${encodeURIComponent(error.message)}`);
   }
 
