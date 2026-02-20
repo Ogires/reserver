@@ -20,8 +20,15 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
   }
 
   // Check if tenant already exists for this user email
-  // Simplified for MVP: We check if there's any tenant matching their auth info
-  // Realistically we'd add an owner_id to the tenants table.
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle();
+
+  if (tenant) {
+    redirect('/admin/dashboard');
+  }
   
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-indigo-500/30 font-sans">

@@ -82,7 +82,8 @@ export async function onboardTenant(formData: FormData): Promise<void> {
       slug,
       preferred_currency: currency,
       slot_interval_minutes: slotIntervalMinutes,
-      default_language: 'es'
+      default_language: 'es',
+      owner_id: user.id
     })
     .select()
     .single();
