@@ -44,6 +44,17 @@ export default async function TenantPage({ params }: TenantPageProps) {
         </Suspense>
       </main>
       
+      {/* Powered by Footer */}
+      <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 mt-12 bg-zinc-100 dark:bg-zinc-900/50">
+        <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-zinc-500 dark:text-zinc-500 text-sm">
+          <p>© {new Date().getFullYear()} {tenantSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}. All rights reserved.</p>
+          <a href="/" className="mt-4 md:mt-0 flex items-center hover:text-indigo-500 transition-colors">
+            <span className="bg-gradient-to-br from-indigo-500 to-purple-500 w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white mr-2">R</span>
+            Powered by Reserver
+          </a>
+        </div>
+      </footer>
+
     </div>
   );
 }
