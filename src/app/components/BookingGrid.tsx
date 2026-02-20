@@ -30,7 +30,7 @@ export function BookingGrid({ slots, onSelectSlot, selectedSlot }: BookingGridPr
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <div data-testid="booking-grid" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       {slots.map((slot) => {
         const date = new Date(slot.startTime);
         const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -50,6 +50,7 @@ export function BookingGrid({ slots, onSelectSlot, selectedSlot }: BookingGridPr
         return (
           <button
             key={slot.startTime}
+            data-testid="available-slot"
             onClick={() => onSelectSlot(slot.startTime)}
             className={`
               relative flex flex-col items-center justify-center py-4 px-2 rounded-xl border transition-all duration-300 ease-out font-medium

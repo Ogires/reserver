@@ -5,7 +5,8 @@ export class StripePaymentService {
 
   constructor() {
     // Make sure we have the secret key in env before initializing
-    const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+    // Fallback to a dummy key to prevent server crash during E2E UI testing
+    const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_dummyKeyForDevelopment';
     this.stripe = new Stripe(stripeKey, {
       apiVersion: '2026-01-28.clover' // using recent API version
     });
