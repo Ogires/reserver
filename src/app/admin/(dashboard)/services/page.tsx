@@ -41,32 +41,77 @@ export default async function ServicesPage() {
             </h2>
             
             <form action={createService} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="name_es">
-                  Name (Spanish)
-                </label>
-                <input
-                  type="text"
-                  id="name_es"
-                  name="name_es"
-                  required
-                  className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
-                  placeholder="Ej. Consulta General"
-                />
-              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="name_es">
+                      Name (Spanish)
+                    </label>
+                    <input
+                      type="text"
+                      id="name_es"
+                      name="name_es"
+                      required
+                      className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
+                      placeholder="Ej. Consulta General"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="name_en">
-                  Name (English)
-                </label>
-                <input
-                  type="text"
-                  id="name_en"
-                  name="name_en"
-                  required
-                  className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
-                  placeholder="e.g. General Consultation"
-                />
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="name_en">
+                      Name (English)
+                    </label>
+                    <input
+                      type="text"
+                      id="name_en"
+                      name="name_en"
+                      required
+                      className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
+                      placeholder="e.g. General Consultation"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="description_es">
+                      Description (ES)
+                    </label>
+                    <textarea
+                      id="description_es"
+                      name="description_es"
+                      rows={2}
+                      className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm resize-none"
+                      placeholder="Opcional: Detalles del servicio..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="description_en">
+                      Description (EN)
+                    </label>
+                    <textarea
+                      id="description_en"
+                      name="description_en"
+                      rows={2}
+                      className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm resize-none"
+                      placeholder="Optional: Service details..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1" htmlFor="image_url">
+                      Image URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      id="image_url"
+                      name="image_url"
+                      className="w-full bg-slate-950/50 border border-slate-800 text-white rounded-xl px-4 py-2.5 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all text-sm"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

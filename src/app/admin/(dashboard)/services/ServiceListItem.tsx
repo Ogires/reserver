@@ -15,6 +15,9 @@ export default function ServiceListItem({ service, currency }: ServiceListItemPr
   // Form states
   const [nameEs, setNameEs] = useState(service.name_translatable?.es || '');
   const [nameEn, setNameEn] = useState(service.name_translatable?.en || '');
+  const [descriptionEs, setDescriptionEs] = useState(service.description_translatable?.es || '');
+  const [descriptionEn, setDescriptionEn] = useState(service.description_translatable?.en || '');
+  const [imageUrl, setImageUrl] = useState(service.image_url || '');
   const [duration, setDuration] = useState(service.duration_minutes || 30);
   const [price, setPrice] = useState(service.price || 0);
 
@@ -25,6 +28,9 @@ export default function ServiceListItem({ service, currency }: ServiceListItemPr
       const formData = new FormData();
       formData.append('name_es', nameEs);
       formData.append('name_en', nameEn);
+      formData.append('description_es', descriptionEs);
+      formData.append('description_en', descriptionEn);
+      formData.append('image_url', imageUrl);
       formData.append('duration_minutes', duration.toString());
       formData.append('price', price.toString());
       
@@ -75,6 +81,37 @@ export default function ServiceListItem({ service, currency }: ServiceListItemPr
                 className="w-full bg-slate-950/80 border border-slate-700 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Description (ES)</label>
+              <textarea
+                value={descriptionEs}
+                onChange={(e) => setDescriptionEs(e.target.value)}
+                rows={2}
+                className="w-full bg-slate-950/80 border border-slate-700 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Description (EN)</label>
+              <textarea
+                value={descriptionEn}
+                onChange={(e) => setDescriptionEn(e.target.value)}
+                rows={2}
+                className="w-full bg-slate-950/80 border border-slate-700 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Image URL</label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              className="w-full bg-slate-950/80 border border-slate-700 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -129,10 +166,18 @@ export default function ServiceListItem({ service, currency }: ServiceListItemPr
   // Display Mode
   return (
     <div className="group bg-slate-900/30 hover:bg-slate-900/60 backdrop-blur-sm border border-slate-800/60 hover:border-indigo-500/30 p-5 rounded-2xl transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div className="flex items-center space-x-4">
-        <div className="w-12 h-12 shrink-0 bg-slate-800/80 rounded-xl flex items-center justify-center text-slate-300 border border-slate-700/50 font-medium text-lg shadow-inner group-hover:border-indigo-500/30 group-hover:text-indigo-200 transition-colors">
-          {service.duration_minutes}'
-        </div>
+      <div className="flex items-center space-x-4 min-w-0">
+        {service.image_url ? (
+          <img 
+            src={service.image_url} 
+            alt={service.name_translatable?.en} 
+            className="w-16 h-16 shrink-0 object-cover rounded-xl border border-slate-700/50 shadow-inner"
+          />
+        ) : (
+          <div className="w-16 h-16 shrink-0 bg-slate-800/80 rounded-xl flex items-center justify-center text-slate-300 border border-slate-700/50 font-medium text-lg shadow-inner group-hover:border-indigo-500/30 group-hover:text-indigo-200 transition-colors">
+            {service.duration_minutes}'
+          </div>
+        )}
         <div className="min-w-0">
           <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition-colors truncate">
             {service.name_translatable?.en || 'Unnamed Service'}
@@ -140,6 +185,11 @@ export default function ServiceListItem({ service, currency }: ServiceListItemPr
           <p className="text-sm text-slate-500 truncate">
             {service.name_translatable?.es || 'Sin nombre'}
           </p>
+          {service.description_translatable?.en && (
+            <p className="text-xs text-slate-400 mt-1 line-clamp-1 italic">
+              "{service.description_translatable?.en}"
+            </p>
+          )}
         </div>
       </div>
       

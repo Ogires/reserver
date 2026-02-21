@@ -12,9 +12,32 @@ export default async function TenantPage({ params }: TenantPageProps) {
   // For the sake of the TFM demonstration before full DB seeding, we mock the initial data.
   const mockTenantId = 't1'; 
   const mockServices = [
-    { id: 's1', name: 'Premium Haircut', durationMinutes: 45, price: 25.0, currency: 'EUR' },
-    { id: 's2', name: 'Beard Trim', durationMinutes: 15, price: 10.0, currency: 'EUR' },
-    { id: 's3', name: 'Haircut & Beard', durationMinutes: 60, price: 30.0, currency: 'EUR' },
+    { 
+      id: 's1', 
+      name: 'Premium Haircut', 
+      description: 'A full service haircut including consultation, wash, premium cut, and styling with our best products.',
+      imageUrl: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=300&h=300&fit=crop',
+      durationMinutes: 45, 
+      price: 25.0, 
+      currency: 'EUR' 
+    },
+    { 
+      id: 's2', 
+      name: 'Beard Trim', 
+      description: 'Quick and precise beard trimming and shaping.',
+      durationMinutes: 15, 
+      price: 10.0, 
+      currency: 'EUR' 
+    },
+    { 
+      id: 's3', 
+      name: 'Haircut & Beard', 
+      description: 'The complete package for the modern gentleman. Includes hot towel treatement.',
+      imageUrl: 'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=300&h=300&fit=crop',
+      durationMinutes: 60, 
+      price: 30.0, 
+      currency: 'EUR' 
+    },
   ];
 
   return (

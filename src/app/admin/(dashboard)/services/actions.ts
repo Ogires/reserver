@@ -10,6 +10,9 @@ export async function createService(formData: FormData) {
 
   const nameEs = formData.get('name_es') as string;
   const nameEn = formData.get('name_en') as string;
+  const descEs = formData.get('description_es') as string | null;
+  const descEn = formData.get('description_en') as string | null;
+  const imageUrl = formData.get('image_url') as string | null;
   const duration = parseInt(formData.get('duration_minutes') as string, 10);
   const price = parseFloat(formData.get('price') as string);
 
@@ -18,6 +21,8 @@ export async function createService(formData: FormData) {
     .insert({
       tenant_id: tenant.id,
       name_translatable: { es: nameEs, en: nameEn },
+      description_translatable: { es: descEs || '', en: descEn || '' },
+      image_url: imageUrl || null,
       duration_minutes: duration,
       price: price,
       currency: tenant.preferred_currency
@@ -50,6 +55,9 @@ export async function updateService(serviceId: string, formData: FormData) {
 
   const nameEs = formData.get('name_es') as string;
   const nameEn = formData.get('name_en') as string;
+  const descEs = formData.get('description_es') as string | null;
+  const descEn = formData.get('description_en') as string | null;
+  const imageUrl = formData.get('image_url') as string | null;
   const duration = parseInt(formData.get('duration_minutes') as string, 10);
   const price = parseFloat(formData.get('price') as string);
 
@@ -57,6 +65,8 @@ export async function updateService(serviceId: string, formData: FormData) {
     .from('services')
     .update({
       name_translatable: { es: nameEs, en: nameEn },
+      description_translatable: { es: descEs || '', en: descEn || '' },
+      image_url: imageUrl || null,
       duration_minutes: duration,
       price: price
     })
