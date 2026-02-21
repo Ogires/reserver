@@ -111,21 +111,24 @@ export async function submitBookingAction(formData: FormData) {
     
     // Email Confirmation
     if (customer?.email && service && bookingId) {
-      const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
-      notificationPromises.push(
-        emailService.sendEmail(
-          customer.email,
-          'Booking Confirmed',
-          `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>`
-        )
-      );
+      if (tenantDetails?.notifyEmailConfirmations !== false) {
+        const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
+        notificationPromises.push(
+          emailService.sendEmail(
+            customer.email,
+            'Booking Confirmed',
+            `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>`
+          )
+        );
+      }
+      // Always mark as sent to prevent retries or infinite loops, even if toggle is disabled
       notificationPromises.push(
         repository.updateBooking(bookingId, { confirmationSentAt: new Date() })
       );
     }
 
     // Telegram Notifications
-    if (service && bookingId) {
+    if (service && bookingId && tenantDetails?.notifyTelegramConfirmations !== false) {
       const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
       const serviceName = service.nameTranslatable['es'] || 'Service';
       

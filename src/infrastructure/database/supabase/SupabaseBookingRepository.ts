@@ -252,6 +252,10 @@ export class SupabaseBookingRepository implements IBookingRepository {
       reminderHoursPrior: row.reminder_hours_prior,
       reminderTemplateBody: row.reminder_template,
       telegramChatId: row.telegram_chat_id,
+      notifyEmailConfirmations: row.notify_email_confirmations ?? true,
+      notifyTelegramConfirmations: row.notify_telegram_confirmations ?? true,
+      notifyEmailReminders: row.notify_email_reminders ?? true,
+      notifyTelegramReminders: row.notify_telegram_reminders ?? true,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

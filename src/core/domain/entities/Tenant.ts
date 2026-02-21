@@ -12,6 +12,10 @@ export interface Tenant {
   reminderHoursPrior?: number;
   reminderTemplateBody?: string | null;
   telegramChatId?: string | null;
+  notifyEmailConfirmations?: boolean;
+  notifyTelegramConfirmations?: boolean;
+  notifyEmailReminders?: boolean;
+  notifyTelegramReminders?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

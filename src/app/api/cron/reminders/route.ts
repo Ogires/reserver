@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SupabaseBookingRepository } from '../../../../infrastructure/database/supabase/SupabaseBookingRepository';
 import { ResendEmailService } from '../../../../infrastructure/notifications/resend/ResendEmailService';
+import { TelegramService } from '../../../../infrastructure/notifications/telegram/TelegramService';
 import { SendBookingRemindersUseCase } from '../../../../core/application/use-cases/SendBookingRemindersUseCase';
 
 export async function GET(req: NextRequest) {
@@ -13,7 +14,8 @@ export async function GET(req: NextRequest) {
   try {
     const repository = new SupabaseBookingRepository();
     const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
-    const useCase = new SendBookingRemindersUseCase(repository, emailService);
+    const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
+    const useCase = new SendBookingRemindersUseCase(repository, emailService, telegramService);
 
     await useCase.execute();
 

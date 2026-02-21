@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
           .from('bookings')
           .update({ status: 'confirmed', confirmation_sent_at: now.toISOString() })
           .eq('id', bookingId)
-          .select('*, customers(email, telegram_chat_id), services(name_translatable), tenants(telegram_chat_id)')
+          .select('*, customers(email, telegram_chat_id), services(name_translatable), tenants(telegram_chat_id, notify_email_confirmations, notify_telegram_confirmations)')
           .single();
           
         if (error || !updatedBooking) {
@@ -59,10 +59,13 @@ export async function POST(req: NextRequest) {
         const customerTelegramId = updatedBooking.customers?.telegram_chat_id;
         const tenantTelegramId = updatedBooking.tenants?.telegram_chat_id;
         const serviceName = updatedBooking.services?.name_translatable?.['es'] || 'Service';
+        
+        const notifyEmail = updatedBooking.tenants?.notify_email_confirmations !== false;
+        const notifyTelegram = updatedBooking.tenants?.notify_telegram_confirmations !== false;
 
         const notificationPromises = [];
 
-        if (customerEmail) {
+        if (customerEmail && notifyEmail) {
           const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
           notificationPromises.push(
             emailService.sendEmail(
@@ -74,24 +77,26 @@ export async function POST(req: NextRequest) {
         }
 
         // Send Telegram Notifications
-        const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
-        
-        if (customerTelegramId) {
-          notificationPromises.push(
-            telegramService.sendMessage(
-              customerTelegramId,
-              `✅ <b>Booking Confirmed! (Paid)</b>\n\nYour payment was successful and your appointment for <b>${serviceName}</b> is confirmed.`
-            )
-          );
-        }
+        if (notifyTelegram) {
+          const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
+          
+          if (customerTelegramId) {
+            notificationPromises.push(
+              telegramService.sendMessage(
+                customerTelegramId,
+                `✅ <b>Booking Confirmed! (Paid)</b>\n\nYour payment was successful and your appointment for <b>${serviceName}</b> is confirmed.`
+              )
+            );
+          }
 
-        if (tenantTelegramId) {
-          notificationPromises.push(
-            telegramService.sendMessage(
-              tenantTelegramId,
-              `📅 <b>New Paid Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just paid and confirmed.`
-            )
-          );
+          if (tenantTelegramId) {
+            notificationPromises.push(
+              telegramService.sendMessage(
+                tenantTelegramId,
+                `📅 <b>New Paid Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just paid and confirmed.`
+              )
+            );
+          }
         }
 
         // Ensure all notifications run concurrently
