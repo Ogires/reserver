@@ -11,6 +11,7 @@ export interface Tenant {
   stripeOnboardingComplete?: boolean;
   reminderHoursPrior?: number;
   reminderTemplateBody?: string | null;
+  telegramChatId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

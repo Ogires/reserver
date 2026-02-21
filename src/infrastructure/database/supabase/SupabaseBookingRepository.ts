@@ -103,6 +103,36 @@ export class SupabaseBookingRepository implements IBookingRepository {
     return data.email;
   }
 
+  async getCustomerTelegramId(customerId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('telegram_chat_id')
+      .eq('id', customerId)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+
+    return data.telegram_chat_id;
+  }
+
+  async updateCustomer(customerId: string, updates: Partial<{ telegramChatId: string }>): Promise<void> {
+    const dbUpdates: any = {};
+    if (updates.telegramChatId !== undefined) dbUpdates.telegram_chat_id = updates.telegramChatId;
+
+    if (Object.keys(dbUpdates).length === 0) return;
+
+    const { error } = await supabase
+      .from('customers')
+      .update(dbUpdates)
+      .eq('id', customerId);
+
+    if (error) {
+      throw new Error(`Error updating customer: ${error.message}`);
+    }
+  }
+
   async createBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<Booking> {
     const { data, error } = await supabase
       .from('bookings')
@@ -221,6 +251,7 @@ export class SupabaseBookingRepository implements IBookingRepository {
       stripeOnboardingComplete: row.stripe_onboarding_complete,
       reminderHoursPrior: row.reminder_hours_prior,
       reminderTemplateBody: row.reminder_template,
+      telegramChatId: row.telegram_chat_id,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

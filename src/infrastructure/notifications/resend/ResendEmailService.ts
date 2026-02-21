@@ -21,8 +21,10 @@ export class ResendEmailService implements IEmailService {
     }
 
     try {
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'Booking SaaS <onboarding@resend.dev>';
+      
       const { data, error } = await this.resend.emails.send({
-        from: 'Booking SaaS <onboarding@resend.dev>', // Default for testing/dev
+        from: fromEmail,
         to,
         subject,
         html: body

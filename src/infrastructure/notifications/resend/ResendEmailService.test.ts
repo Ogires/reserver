@@ -17,16 +17,18 @@ describe('ResendEmailService', () => {
   });
 
   it('should call Resend SDK with correct parameters when key is provided', async () => {
+    process.env.RESEND_FROM_EMAIL = 'Test Sender <test@test.com>';
     const service = new ResendEmailService('dummy-key');
     await service.sendEmail('test@example.com', 'Test Subject', '<p>Test</p>');
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     expect(sendMock).toHaveBeenCalledWith({
-      from: 'Booking SaaS <onboarding@resend.dev>',
+      from: 'Test Sender <test@test.com>',
       to: 'test@example.com',
       subject: 'Test Subject',
       html: '<p>Test</p>'
     });
+    delete process.env.RESEND_FROM_EMAIL;
   });
 
   it('should run in mock mode when no API key is provided, without throwing', async () => {

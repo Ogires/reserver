@@ -21,6 +21,16 @@ export interface IBookingRepository {
   getCustomerEmail(customerId: string): Promise<string | null>;
 
   /**
+   * Fetches the customer Telegram Chat ID
+   */
+  getCustomerTelegramId(customerId: string): Promise<string | null>;
+
+  /**
+   * Updates a customer's details (e.g. tracking telegram chat ID)
+   */
+  updateCustomer(customerId: string, updates: Partial<{ telegramChatId: string }>): Promise<void>;
+
+  /**
    * Fetches the tenant details (for slotIntervalMinutes, etc.)
    */
   getTenantById(tenantId: string): Promise<Tenant | null>;

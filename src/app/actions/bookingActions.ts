@@ -5,6 +5,7 @@ import { CreateBookingUseCase } from '../../core/application/use-cases/CreateBoo
 import { SupabaseBookingRepository } from '../../infrastructure/database/supabase/SupabaseBookingRepository';
 import { StripePaymentService } from '../../infrastructure/payments/stripe/StripePaymentService';
 import { ResendEmailService } from '../../infrastructure/notifications/resend/ResendEmailService';
+import { TelegramService } from '../../infrastructure/notifications/telegram/TelegramService';
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -101,8 +102,12 @@ export async function submitBookingAction(formData: FormData) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-    const { data: customer } = await supabase.from('customers').select('email').eq('id', customerId).single();
+    // Fetch customer details including email and telegram ID
+    const { data: customer } = await supabase.from('customers').select('email, telegram_chat_id').eq('id', customerId).single();
+    // Fetch tenant to see if they have a telegram chat ID
+    const tenantDetails = await repository.getTenantById(tenantId);
     
+    // Email Confirmation
     if (customer?.email && service && bookingId) {
       const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
       await emailService.sendEmail(
@@ -112,8 +117,31 @@ export async function submitBookingAction(formData: FormData) {
       );
       await repository.updateBooking(bookingId, { confirmationSentAt: new Date() });
     }
+
+    // Telegram Notifications
+    if (service && bookingId) {
+      const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
+      const serviceName = service.nameTranslatable['es'] || 'Service';
+      
+      // Notify Customer
+      if (customer?.telegram_chat_id) {
+        await telegramService.sendMessage(
+          customer.telegram_chat_id,
+          `✅ <b>Booking Confirmed!</b>\n\nYour appointment for <b>${serviceName}</b> is confirmed.`
+        );
+      }
+
+      // Notify Tenant
+      if (tenantDetails?.telegramChatId) {
+        await telegramService.sendMessage(
+          tenantDetails.telegramChatId,
+          `📅 <b>New Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just created.`
+        );
+      }
+    }
+
   } catch (err: any) {
-    console.error('Failed to send free booking confirmation email:', err);
+    console.error('Failed to send free booking confirmation notifications:', err);
   }
 
   revalidatePath(`/${tenantSlug}`);

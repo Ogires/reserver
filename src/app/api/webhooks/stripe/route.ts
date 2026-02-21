@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { ResendEmailService } from '../../../../infrastructure/notifications/resend/ResendEmailService';
+import { TelegramService } from '../../../../infrastructure/notifications/telegram/TelegramService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummyKeyForDevelopment', {
   apiVersion: '2026-01-28.clover',
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
           .from('bookings')
           .update({ status: 'confirmed', confirmation_sent_at: now.toISOString() })
           .eq('id', bookingId)
-          .select('*, customers(email), services(name_translatable)')
+          .select('*, customers(email, telegram_chat_id), services(name_translatable), tenants(telegram_chat_id)')
           .single();
           
         if (error || !updatedBooking) {
@@ -56,6 +57,8 @@ export async function POST(req: NextRequest) {
 
         // Send Confirmation Email
         const customerEmail = updatedBooking.customers?.email;
+        const customerTelegramId = updatedBooking.customers?.telegram_chat_id;
+        const tenantTelegramId = updatedBooking.tenants?.telegram_chat_id;
         const serviceName = updatedBooking.services?.name_translatable?.['es'] || 'Service';
 
         if (customerEmail) {
@@ -64,6 +67,23 @@ export async function POST(req: NextRequest) {
             customerEmail,
             'Booking Confirmed (Paid)',
             `<p>Your payment was successful and your booking for <strong>${serviceName}</strong> is confirmed.</p>`
+          );
+        }
+
+        // Send Telegram Notifications
+        const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
+        
+        if (customerTelegramId) {
+          await telegramService.sendMessage(
+            customerTelegramId,
+            `✅ <b>Booking Confirmed! (Paid)</b>\n\nYour payment was successful and your appointment for <b>${serviceName}</b> is confirmed.`
+          );
+        }
+
+        if (tenantTelegramId) {
+          await telegramService.sendMessage(
+            tenantTelegramId,
+            `📅 <b>New Paid Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just paid and confirmed.`
           );
         }
       } catch (dbError) {
