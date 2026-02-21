@@ -1,7 +1,7 @@
 import { requireTenant } from '../../utils';
 import { createClient } from '../../../../utils/supabase/server';
-import { createService, deleteService } from './actions';
-import { Service } from '../../../../core/domain/entities/Service';
+import { createService } from './actions';
+import ServiceListItem from './ServiceListItem';
 
 export default async function ServicesPage() {
   const { tenant } = await requireTenant();
@@ -134,41 +134,11 @@ export default async function ServicesPage() {
             </div>
           ) : (
             services.map((service) => (
-              <div key={service.id} className="group bg-slate-900/30 hover:bg-slate-900/60 backdrop-blur-sm border border-slate-800/60 hover:border-slate-700/60 p-5 rounded-2xl transition-all flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-slate-800/80 rounded-xl flex items-center justify-center text-slate-300 border border-slate-700/50 font-medium text-lg shadow-inner">
-                    {service.duration_minutes}'
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-white group-hover:text-indigo-300 transition-colors">
-                      {service.name_translatable?.en || 'Unnamed Service'}
-                    </h3>
-                    <p className="text-sm text-slate-500">
-                      {service.name_translatable?.es || 'Sin nombre'}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-6">
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-white">
-                      {service.price} <span className="text-sm font-medium text-slate-500 uppercase">{service.currency}</span>
-                    </p>
-                  </div>
-                  
-                  {/* Delete Button calling Server Action via form */}
-                  <form action={async () => {
-                    'use server';
-                    await deleteService(service.id);
-                  }}>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </form>
-                </div>
-              </div>
+              <ServiceListItem 
+                key={service.id} 
+                service={service} 
+                currency={tenant.preferred_currency} 
+              />
             ))
           )}
         </div>
