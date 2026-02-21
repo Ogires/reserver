@@ -14,7 +14,12 @@ describe('CheckAvailabilityUseCase', () => {
     getBookingsByDate: vi.fn(),
     getTenantById: vi.fn(),
     getScheduleExceptionByDate: vi.fn(),
-    createBooking: vi.fn()
+    createBooking: vi.fn(),
+    getCustomerEmail: vi.fn(),
+    getCustomerTelegramId: vi.fn(),
+    updateCustomer: vi.fn(),
+    getPendingReminders: vi.fn(),
+    updateBooking: vi.fn(),
   };
 
   const useCase = new CheckAvailabilityUseCase(mockRepository);

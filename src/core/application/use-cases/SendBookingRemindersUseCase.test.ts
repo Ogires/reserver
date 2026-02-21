@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, Mocked } from 'vitest';
 import { SendBookingRemindersUseCase } from './SendBookingRemindersUseCase';
 import { IBookingRepository } from '../ports/IBookingRepository';
 import { IEmailService } from '../ports/out/IEmailService';
@@ -6,8 +6,8 @@ import { Booking } from '../../domain/entities/Booking';
 import { Tenant } from '../../domain/entities/Tenant';
 
 describe('SendBookingRemindersUseCase', () => {
-  let mockRepo: vitest.Mocked<IBookingRepository>;
-  let mockEmail: vitest.Mocked<IEmailService>;
+  let mockRepo: Mocked<IBookingRepository>;
+  let mockEmail: Mocked<IEmailService>;
   let useCase: SendBookingRemindersUseCase;
 
   beforeEach(() => {

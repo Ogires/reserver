@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
           process.env.SUPABASE_SERVICE_ROLE_KEY!
         );
         
-        // Update the booking status to PAID
         // Update the booking status to PAID and set confirmation_sent_at
         const now = new Date();
         const { error, data: updatedBooking } = await supabase
