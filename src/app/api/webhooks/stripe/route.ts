@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { ResendEmailService } from '../../../../infrastructure/notifications/resend/ResendEmailService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummyKeyForDevelopment', {
   apiVersion: '2026-01-28.clover',
@@ -37,18 +38,34 @@ export async function POST(req: NextRequest) {
         );
         
         // Update the booking status to PAID
-        // Using Service Role Key bypasses RLS policies ensuring the Webhook works
-        const { error } = await supabase
+        // Update the booking status to PAID and set confirmation_sent_at
+        const now = new Date();
+        const { error, data: updatedBooking } = await supabase
           .from('bookings')
-          .update({ status: 'confirmed' }) // or 'paid' if we had a payment_status column
-          .eq('id', bookingId);
+          .update({ status: 'confirmed', confirmation_sent_at: now.toISOString() })
+          .eq('id', bookingId)
+          .select('*, customers(email), services(name_translatable)')
+          .single();
           
-        if (error) {
-          console.error(`Failed to update booking ${bookingId} status:`, error.message);
+        if (error || !updatedBooking) {
+          console.error(`Failed to update booking ${bookingId} status:`, error?.message);
           return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
         }
         
         console.log(`Successfully marked booking ${bookingId} as Paid via Stripe Webhook`);
+
+        // Send Confirmation Email
+        const customerEmail = updatedBooking.customers?.email;
+        const serviceName = updatedBooking.services?.name_translatable?.['es'] || 'Service';
+
+        if (customerEmail) {
+          const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
+          await emailService.sendEmail(
+            customerEmail,
+            'Booking Confirmed (Paid)',
+            `<p>Your payment was successful and your booking for <strong>${serviceName}</strong> is confirmed.</p>`
+          );
+        }
       } catch (dbError) {
         console.error('Database connection failed during webhook:', dbError);
         return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });

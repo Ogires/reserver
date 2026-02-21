@@ -9,6 +9,8 @@ export interface Tenant {
   slotIntervalMinutes: number; // NEW
   stripeAccountId?: string | null;
   stripeOnboardingComplete?: boolean;
+  reminderHoursPrior?: number;
+  reminderTemplateBody?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

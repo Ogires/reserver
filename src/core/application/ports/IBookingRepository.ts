@@ -16,6 +16,11 @@ export interface IBookingRepository {
   getServiceById(serviceId: string): Promise<Service | null>;
 
   /**
+   * Fetches the customer email
+   */
+  getCustomerEmail(customerId: string): Promise<string | null>;
+
+  /**
    * Fetches the tenant details (for slotIntervalMinutes, etc.)
    */
   getTenantById(tenantId: string): Promise<Tenant | null>;
@@ -29,6 +34,16 @@ export interface IBookingRepository {
    * Fetches any schedule exceptions (overrides) for a specific date
    */
   getScheduleExceptionByDate(tenantId: string, date: Date): Promise<ScheduleException[]>;
+
+  /**
+   * Fetches multiple bookings for batch reminder processing
+   */
+  getPendingReminders(now: Date, until: Date): Promise<Booking[]>;
+
+  /**
+   * Updates an existing booking.
+   */
+  updateBooking(id: string, updates: Partial<Booking>): Promise<Booking>;
 
   /**
    * Persists a newly created booking.

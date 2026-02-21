@@ -11,6 +11,8 @@ export interface Booking {
   status: BookingStatus;
   paymentStatus: PaymentStatus;
   stripePaymentIntentId?: string | null;
+  confirmationSentAt?: Date | null;
+  reminderSentAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

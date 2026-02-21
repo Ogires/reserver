@@ -89,6 +89,20 @@ export class SupabaseBookingRepository implements IBookingRepository {
     return this.mapToService(data);
   }
 
+  async getCustomerEmail(customerId: string): Promise<string | null> {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('email')
+      .eq('id', customerId)
+      .single();
+    
+    if (error || !data) {
+      return null;
+    }
+
+    return data.email;
+  }
+
   async createBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<Booking> {
     const { data, error } = await supabase
       .from('bookings')
@@ -100,13 +114,53 @@ export class SupabaseBookingRepository implements IBookingRepository {
         end_time: booking.endTime.toISOString(),
         status: booking.status,
         payment_status: booking.paymentStatus,
-        stripe_payment_intent_id: booking.stripePaymentIntentId
+        stripe_payment_intent_id: booking.stripePaymentIntentId,
+        confirmation_sent_at: booking.confirmationSentAt?.toISOString() || null,
+        reminder_sent_at: booking.reminderSentAt?.toISOString() || null
       })
       .select()
       .single();
 
     if (error) {
       throw new Error(`Error creating booking: ${error.message}`);
+    }
+
+    return this.mapToBooking(data);
+  }
+
+  async getPendingReminders(now: Date, until: Date): Promise<Booking[]> {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('status', 'confirmed')
+      .is('reminder_sent_at', null)
+      .gte('start_time', now.toISOString())
+      .lte('start_time', until.toISOString());
+
+    if (error) {
+      throw new Error(`Error fetching pending reminders: ${error.message}`);
+    }
+
+    return (data || []).map((row) => this.mapToBooking(row));
+  }
+
+  async updateBooking(id: string, updates: Partial<Booking>): Promise<Booking> {
+    const dbUpdates: any = {};
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
+    if (updates.stripePaymentIntentId !== undefined) dbUpdates.stripe_payment_intent_id = updates.stripePaymentIntentId;
+    if (updates.confirmationSentAt !== undefined) dbUpdates.confirmation_sent_at = updates.confirmationSentAt?.toISOString() || null;
+    if (updates.reminderSentAt !== undefined) dbUpdates.reminder_sent_at = updates.reminderSentAt?.toISOString() || null;
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Error updating booking: ${error.message}`);
     }
 
     return this.mapToBooking(data);
@@ -125,6 +179,8 @@ export class SupabaseBookingRepository implements IBookingRepository {
       status: row.status as BookingStatus,
       paymentStatus: row.payment_status as PaymentStatus,
       stripePaymentIntentId: row.stripe_payment_intent_id,
+      confirmationSentAt: row.confirmation_sent_at ? new Date(row.confirmation_sent_at) : undefined,
+      reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : undefined,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };
@@ -163,6 +219,8 @@ export class SupabaseBookingRepository implements IBookingRepository {
       slotIntervalMinutes: row.slot_interval_minutes,
       stripeAccountId: row.stripe_account_id,
       stripeOnboardingComplete: row.stripe_onboarding_complete,
+      reminderHoursPrior: row.reminder_hours_prior,
+      reminderTemplateBody: row.reminder_template,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

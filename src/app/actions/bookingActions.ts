@@ -4,6 +4,8 @@ import { CheckAvailabilityUseCase } from '../../core/application/use-cases/Check
 import { CreateBookingUseCase } from '../../core/application/use-cases/CreateBookingUseCase';
 import { SupabaseBookingRepository } from '../../infrastructure/database/supabase/SupabaseBookingRepository';
 import { StripePaymentService } from '../../infrastructure/payments/stripe/StripePaymentService';
+import { ResendEmailService } from '../../infrastructure/notifications/resend/ResendEmailService';
+import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -94,6 +96,26 @@ export async function submitBookingAction(formData: FormData) {
   }
 
   // If no Stripe integration activated or free service
+  try {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    const { data: customer } = await supabase.from('customers').select('email').eq('id', customerId).single();
+    
+    if (customer?.email && service && bookingId) {
+      const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
+      await emailService.sendEmail(
+        customer.email,
+        'Booking Confirmed',
+        `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>`
+      );
+      await repository.updateBooking(bookingId, { confirmationSentAt: new Date() });
+    }
+  } catch (err: any) {
+    console.error('Failed to send free booking confirmation email:', err);
+  }
+
   revalidatePath(`/${tenantSlug}`);
   redirect(`/${tenantSlug}/success`);
 }
