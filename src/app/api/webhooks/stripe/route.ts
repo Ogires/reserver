@@ -60,12 +60,16 @@ export async function POST(req: NextRequest) {
         const tenantTelegramId = updatedBooking.tenants?.telegram_chat_id;
         const serviceName = updatedBooking.services?.name_translatable?.['es'] || 'Service';
 
+        const notificationPromises = [];
+
         if (customerEmail) {
           const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
-          await emailService.sendEmail(
-            customerEmail,
-            'Booking Confirmed (Paid)',
-            `<p>Your payment was successful and your booking for <strong>${serviceName}</strong> is confirmed.</p>`
+          notificationPromises.push(
+            emailService.sendEmail(
+              customerEmail,
+              'Booking Confirmed (Paid)',
+              `<p>Your payment was successful and your booking for <strong>${serviceName}</strong> is confirmed.</p>`
+            )
           );
         }
 
@@ -73,18 +77,26 @@ export async function POST(req: NextRequest) {
         const telegramService = new TelegramService(process.env.TELEGRAM_BOT_TOKEN);
         
         if (customerTelegramId) {
-          await telegramService.sendMessage(
-            customerTelegramId,
-            `✅ <b>Booking Confirmed! (Paid)</b>\n\nYour payment was successful and your appointment for <b>${serviceName}</b> is confirmed.`
+          notificationPromises.push(
+            telegramService.sendMessage(
+              customerTelegramId,
+              `✅ <b>Booking Confirmed! (Paid)</b>\n\nYour payment was successful and your appointment for <b>${serviceName}</b> is confirmed.`
+            )
           );
         }
 
         if (tenantTelegramId) {
-          await telegramService.sendMessage(
-            tenantTelegramId,
-            `📅 <b>New Paid Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just paid and confirmed.`
+          notificationPromises.push(
+            telegramService.sendMessage(
+              tenantTelegramId,
+              `📅 <b>New Paid Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just paid and confirmed.`
+            )
           );
         }
+
+        // Ensure all notifications run concurrently
+        await Promise.allSettled(notificationPromises);
+
       } catch (dbError) {
         console.error('Database connection failed during webhook:', dbError);
         return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });

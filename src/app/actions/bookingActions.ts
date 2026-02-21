@@ -107,15 +107,21 @@ export async function submitBookingAction(formData: FormData) {
     // Fetch tenant to see if they have a telegram chat ID
     const tenantDetails = await repository.getTenantById(tenantId);
     
+    const notificationPromises = [];
+    
     // Email Confirmation
     if (customer?.email && service && bookingId) {
       const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
-      await emailService.sendEmail(
-        customer.email,
-        'Booking Confirmed',
-        `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>`
+      notificationPromises.push(
+        emailService.sendEmail(
+          customer.email,
+          'Booking Confirmed',
+          `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>`
+        )
       );
-      await repository.updateBooking(bookingId, { confirmationSentAt: new Date() });
+      notificationPromises.push(
+        repository.updateBooking(bookingId, { confirmationSentAt: new Date() })
+      );
     }
 
     // Telegram Notifications
@@ -125,20 +131,27 @@ export async function submitBookingAction(formData: FormData) {
       
       // Notify Customer
       if (customer?.telegram_chat_id) {
-        await telegramService.sendMessage(
-          customer.telegram_chat_id,
-          `✅ <b>Booking Confirmed!</b>\n\nYour appointment for <b>${serviceName}</b> is confirmed.`
+        notificationPromises.push(
+          telegramService.sendMessage(
+            customer.telegram_chat_id,
+            `✅ <b>Booking Confirmed!</b>\n\nYour appointment for <b>${serviceName}</b> is confirmed.`
+          )
         );
       }
 
       // Notify Tenant
       if (tenantDetails?.telegramChatId) {
-        await telegramService.sendMessage(
-          tenantDetails.telegramChatId,
-          `📅 <b>New Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just created.`
+        notificationPromises.push(
+          telegramService.sendMessage(
+            tenantDetails.telegramChatId,
+            `📅 <b>New Booking Received!</b>\n\nA new booking for <b>${serviceName}</b> was just created.`
+          )
         );
       }
     }
+
+    // Await all notification promises in parallel to avoid waterfalls
+    await Promise.allSettled(notificationPromises);
 
   } catch (err: any) {
     console.error('Failed to send free booking confirmation notifications:', err);
