@@ -7,6 +7,8 @@ export interface Tenant {
   preferredCurrency: Currency;
   defaultLanguage: string;
   slotIntervalMinutes: number; // NEW
+  stripeAccountId?: string | null;
+  stripeOnboardingComplete?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

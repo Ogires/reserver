@@ -49,7 +49,7 @@ export async function submitBookingAction(formData: FormData) {
     return { error: 'Missing required fields' };
   }
 
-  let bookingId: string;
+  let bookingId: string | undefined;
   let service: any;
 
   try {
@@ -57,11 +57,11 @@ export async function submitBookingAction(formData: FormData) {
     const booking = await createBooking.execute(tenantId, serviceId, customerId, startTime);
     bookingId = booking.id;
 
-    // Fetch service info for Stripe
+    // Fetch service info for Stripe details
     service = await repository.getServiceById(serviceId);
   } catch (error: any) {
-    console.error('Booking creation failed in DB (Simulating success for UI Demo):', error.message);
-    // In E2E tests without DB, we fall through to the default redirect below
+    console.error('Booking creation failed in DB:', error.message);
+    return { error: 'Failed to create booking' };
   }
 
   // --- Proceed to Stripe ---
@@ -69,13 +69,18 @@ export async function submitBookingAction(formData: FormData) {
     const successUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/${tenantSlug}/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/${tenantSlug}`;
 
-    if (service) {
+    if (service && bookingId) {
+      // Look up tenant's Stripe Account
+      const tenant = await repository.getTenantById(tenantId);
+      
       const session = await stripeService.createCheckoutSession(
         service.nameTranslatable['es'] || 'Service',
         service.price,
         service.currency,
         successUrl,
-        cancelUrl
+        cancelUrl,
+        bookingId,
+        tenant?.stripeAccountId || undefined
       );
 
       if (session.url) {

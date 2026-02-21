@@ -45,6 +45,7 @@ export class StripePaymentService {
     currency: string,
     successUrl: string,
     cancelUrl: string,
+    bookingId: string,
     tenantStripeAccountId?: string
   ) {
     const params: Stripe.Checkout.SessionCreateParams = {
@@ -61,6 +62,7 @@ export class StripePaymentService {
           quantity: 1,
         },
       ],
+      metadata: { bookingId },
       mode: 'payment',
       success_url: successUrl,
       cancel_url: cancelUrl,

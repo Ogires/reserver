@@ -161,6 +161,8 @@ export class SupabaseBookingRepository implements IBookingRepository {
       preferredCurrency: row.preferred_currency,
       defaultLanguage: row.default_language,
       slotIntervalMinutes: row.slot_interval_minutes,
+      stripeAccountId: row.stripe_account_id,
+      stripeOnboardingComplete: row.stripe_onboarding_complete,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };
