@@ -26,6 +26,19 @@ export class CheckAvailabilityUseCase {
 
     const intervalMinutes = tenant.slotIntervalMinutes || 30;
     const durationMinutes = service.durationMinutes;
+    const minNoticeHours = tenant.minBookingNoticeHours ?? 2;
+    const maxNoticeDays = tenant.maxBookingNoticeDays ?? 60;
+
+    const now = new Date();
+    
+    // Check max booking notice
+    const maxDate = new Date(now);
+    maxDate.setDate(maxDate.getDate() + maxNoticeDays);
+    maxDate.setHours(23, 59, 59, 999);
+    
+    if (requestedDate > maxDate) {
+      return []; // Date is too far in the future
+    }
 
     // 2. Fetch Exceptions for date
     const exceptions = await this.bookingRepository.getScheduleExceptionByDate(tenantId, requestedDate);
@@ -61,10 +74,16 @@ export class CheckAvailabilityUseCase {
 
     // 5. Generate and Filter Slots
     const availableSlots: TimeSlot[] = [];
+    
+    // Check min booking notice
+    const minTime = new Date(now);
+    minTime.setHours(minTime.getHours() + minNoticeHours);
 
     for (const block of timeBlocks) {
       const allSlots = this.generateSlots(requestedDate, block.openTime, block.closeTime, intervalMinutes, durationMinutes);
-      const openSlots = allSlots.filter(slot => !this.isOverlapping(slot, bookings));
+      const openSlots = allSlots.filter(slot => 
+        slot.startTime >= minTime && !this.isOverlapping(slot, bookings)
+      );
       availableSlots.push(...openSlots.map(s => ({ ...s, available: true })));
     }
 

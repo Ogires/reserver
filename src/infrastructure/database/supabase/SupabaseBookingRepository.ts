@@ -256,6 +256,8 @@ export class SupabaseBookingRepository implements IBookingRepository {
       notifyTelegramConfirmations: row.notify_telegram_confirmations ?? true,
       notifyEmailReminders: row.notify_email_reminders ?? true,
       notifyTelegramReminders: row.notify_telegram_reminders ?? true,
+      minBookingNoticeHours: row.min_booking_notice_hours ?? 2,
+      maxBookingNoticeDays: row.max_booking_notice_days ?? 60,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     };

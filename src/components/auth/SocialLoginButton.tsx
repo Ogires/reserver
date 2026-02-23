@@ -47,7 +47,7 @@ export function SocialLoginButton({
       type="button"
       onClick={handleLogin}
       disabled={isLoading}
-      className="w-full flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="w-full flex justify-center items-center py-3 px-4 border border-slate-700/60 rounded-xl shadow-lg bg-slate-800/40 text-sm font-semibold text-slate-200 hover:bg-slate-800 hover:border-slate-600 hover:shadow-[0_0_20px_rgba(255,255,255,0.05)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
     >
       {isLoading ? (
         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

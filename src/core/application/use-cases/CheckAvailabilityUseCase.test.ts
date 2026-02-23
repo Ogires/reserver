@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CheckAvailabilityUseCase } from './CheckAvailabilityUseCase';
 import { IBookingRepository } from '../ports/IBookingRepository';
 import { Schedule } from '../../domain/entities/Schedule';
@@ -24,9 +24,19 @@ describe('CheckAvailabilityUseCase', () => {
 
   const useCase = new CheckAvailabilityUseCase(mockRepository);
 
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 1, 24, 0, 0, 0)); // Start at midnight
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.resetAllMocks();
+  });
+
   it('should return available slots based on tenant slot intervals', async () => {
     // Arrange
-    const requestedDate = new Date('2026-02-25T00:00:00Z'); // Wednesday
+    const requestedDate = new Date(2026, 1, 24, 0, 0, 0); // Tuesday
     const serviceId = 's1';
     const tenantId = 't1';
 
@@ -68,7 +78,7 @@ describe('CheckAvailabilityUseCase', () => {
 
   it('should handle exceptions that close the business completely', async () => {
     // Arrange
-    const requestedDate = new Date('2026-02-25T00:00:00Z');
+    const requestedDate = new Date(2026, 1, 24, 0, 0, 0);
     
     vi.mocked(mockRepository.getTenantById).mockResolvedValue({ id: 't1', slotIntervalMinutes: 30 } as Tenant);
     vi.mocked(mockRepository.getServiceById).mockResolvedValue({ id: 's1', durationMinutes: 60 } as Service);
@@ -86,7 +96,7 @@ describe('CheckAvailabilityUseCase', () => {
 
   it('should handle exceptions with custom hours', async () => {
     // Arrange
-    const requestedDate = new Date('2026-02-25T00:00:00Z');
+    const requestedDate = new Date(2026, 1, 24, 0, 0, 0);
     
     vi.mocked(mockRepository.getTenantById).mockResolvedValue({ id: 't1', slotIntervalMinutes: 60 } as Tenant);
     vi.mocked(mockRepository.getServiceById).mockResolvedValue({ id: 's1', durationMinutes: 60 } as Service);
@@ -112,7 +122,7 @@ describe('CheckAvailabilityUseCase', () => {
 
   it('should support split shifts (multiple schedules for same day)', async () => {
     // Arrange
-    const requestedDate = new Date('2026-02-25T00:00:00Z');
+    const requestedDate = new Date(2026, 1, 24, 0, 0, 0);
     
     vi.mocked(mockRepository.getTenantById).mockResolvedValue({ id: 't1', slotIntervalMinutes: 60 } as Tenant);
     vi.mocked(mockRepository.getServiceById).mockResolvedValue({ id: 's1', durationMinutes: 60 } as Service);
@@ -138,7 +148,7 @@ describe('CheckAvailabilityUseCase', () => {
 
   it('should filter out overlapping slots properly', async () => {
     // Arrange
-    const requestedDate = new Date('2026-02-25T00:00:00Z');
+    const requestedDate = new Date(2026, 1, 24, 0, 0, 0);
     
     vi.mocked(mockRepository.getTenantById).mockResolvedValue({ id: 't1', slotIntervalMinutes: 30 } as Tenant);
     vi.mocked(mockRepository.getServiceById).mockResolvedValue({ id: 's1', durationMinutes: 60 } as Service);
@@ -164,6 +174,60 @@ describe('CheckAvailabilityUseCase', () => {
     // 09:00 -> 10:00 (overlaps with 09:30-10:30)
     // 09:30 -> 10:30 (overlaps entirely)
     // 10:00 -> 11:00 (overlaps with 09:30-10:30)
+    expect(slots).toHaveLength(0);
+  });
+
+  it('should filter out slots that are too soon (min booking notice)', async () => {
+    // Set specific time for this test to 08:00
+    vi.setSystemTime(new Date(2026, 1, 24, 8, 0, 0));
+
+    // Requesting slots for "today" (Feb 24)
+    const requestedDate = new Date(2026, 1, 24, 0, 0, 0);
+    
+    vi.mocked(mockRepository.getTenantById).mockResolvedValue({ 
+      id: 't1', 
+      slotIntervalMinutes: 30,
+      minBookingNoticeHours: 2 // Cannot book slots before 10:00
+    } as Tenant);
+    vi.mocked(mockRepository.getServiceById).mockResolvedValue({ id: 's1', durationMinutes: 60 } as Service);
+    vi.mocked(mockRepository.getScheduleExceptionByDate).mockResolvedValue([]);
+    vi.mocked(mockRepository.getTenantSchedulesForDate).mockResolvedValue([
+      // Opens at 09:00, but slots before 10:00 should be hidden
+      { openTime: '09:00', closeTime: '12:00' } as Schedule
+    ]);
+    vi.mocked(mockRepository.getBookingsByDate).mockResolvedValue([]);
+
+    const slots = await useCase.execute('t1', 's1', requestedDate);
+
+    expect(slots).toHaveLength(3); 
+    // Remaining valid slots based on 2h notice (from 08:00 -> 10:00):
+    // 10:00 -> 11:00
+    // 10:30 -> 11:30
+    // 11:00 -> 12:00
+    expect(slots[0].startTime.getHours()).toBe(10);
+    expect(slots[0].startTime.getMinutes()).toBe(0);
+  });
+
+  it('should return empty if requesting a date beyond max booking notice', async () => {
+    // Current time is 2026-02-24. Max notice is 10 days.
+    // Requesting slots for Mar 15 (beyond 10 days).
+    const requestedDate = new Date(2026, 2, 15, 0, 0, 0);
+    
+    vi.mocked(mockRepository.getTenantById).mockResolvedValue({ 
+      id: 't1', 
+      slotIntervalMinutes: 30,
+      maxBookingNoticeDays: 10
+    } as Tenant);
+    vi.mocked(mockRepository.getServiceById).mockResolvedValue({ id: 's1', durationMinutes: 60 } as Service);
+    vi.mocked(mockRepository.getScheduleExceptionByDate).mockResolvedValue([]);
+    vi.mocked(mockRepository.getTenantSchedulesForDate).mockResolvedValue([
+      { openTime: '09:00', closeTime: '12:00' } as Schedule
+    ]);
+    vi.mocked(mockRepository.getBookingsByDate).mockResolvedValue([]);
+
+    const slots = await useCase.execute('t1', 's1', requestedDate);
+
+    // Max notice exceeded, should return empty array immediately
     expect(slots).toHaveLength(0);
   });
 });

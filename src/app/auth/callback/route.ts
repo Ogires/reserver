@@ -7,6 +7,9 @@ export async function GET(request: Request) {
   const code = searchParams.get('code');
   // if "next" is in param, use it as the redirect URL
   const next = searchParams.get('next') ?? '/admin/dashboard';
+  // Secure against open redirect vulnerabilities by strictly allowing relative paths
+  const isLocal = next.startsWith('/');
+  const cleanNext = isLocal ? next : '/admin/dashboard';
 
   if (code) {
     const cookieStore = await cookies();
@@ -37,7 +40,7 @@ export async function GET(request: Request) {
     
     if (!error) {
       // Forward the user to the intended destination (or the dashboard)
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${origin}${cleanNext}`);
     } else {
       console.error('Exchange code error:', error.message);
     }
