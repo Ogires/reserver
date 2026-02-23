@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { ServiceSelector } from '../components/ServiceSelector';
 import { BookingGrid } from '../components/BookingGrid';
 import { PremiumDateSelector } from '../components/PremiumDateSelector';
@@ -21,7 +21,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
-  const [submitting, setSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
 
   // Auto-select first service if none selected
@@ -64,7 +64,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
     fetchSlots();
   }, [selectedServiceId, selectedDate, tenantId, services]);
 
-  const handleBookingSubmit = async (e: React.FormEvent) => {
+  const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedServiceId || !selectedSlot) {
       setError('Please select a service and a time slot.');
@@ -75,28 +75,27 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
       return;
     }
 
-    setSubmitting(true);
     setError('');
+    
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.append('tenantId', tenantId);
+        formData.append('tenantSlug', tenantSlug);
+        formData.append('serviceId', selectedServiceId);
+        formData.append('customerName', customerName);
+        formData.append('customerEmail', customerEmail);
+        formData.append('customerPhone', customerPhone);
+        formData.append('startTime', selectedSlot);
 
-    try {
-      const formData = new FormData();
-      formData.append('tenantId', tenantId);
-      formData.append('tenantSlug', tenantSlug);
-      formData.append('serviceId', selectedServiceId);
-      // We will pass the raw customer info for the backend to process/create
-      formData.append('customerName', customerName);
-      formData.append('customerEmail', customerEmail);
-      formData.append('customerPhone', customerPhone);
-      formData.append('startTime', selectedSlot);
-
-      // In a real scenario, this redirects to Stripe or creates the booking and then redirects.
-      await submitBookingAction(formData);
-      
-      alert('Booking initiated! Redirecting to payment...');
-    } catch (err: any) {
-      setError('An error occurred during booking. Please try again.');
-      setSubmitting(false);
-    }
+        // In a real scenario, this redirects to Stripe or creates the booking and then redirects.
+        await submitBookingAction(formData);
+        
+        alert('Booking initiated! Redirecting to payment...');
+      } catch (err: any) {
+        setError('An error occurred during booking. Please try again.');
+      }
+    });
   };
 
   // ----------------------------------------------------
@@ -239,16 +238,16 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
               <div className="pt-4 flex justify-end border-t border-zinc-100 dark:border-zinc-800 mt-8">
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={isPending}
                   className={`
                     w-full md:w-auto px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all duration-300
-                    ${submitting 
+                    ${isPending 
                       ? 'bg-indigo-400 dark:bg-indigo-800 text-white cursor-wait shadow-none' 
                       : 'bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-[1.02] hover:shadow-indigo-500/40'
                     }
                   `}
                 >
-                  {submitting ? 'Processing...' : 'Continue to Payment'}
+                  {isPending ? 'Processing...' : 'Continue to Payment'}
                 </button>
               </div>
             </form>

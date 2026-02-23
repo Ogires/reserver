@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 
 interface PremiumDateSelectorProps {
   selectedDate: string;
@@ -12,11 +12,13 @@ export function PremiumDateSelector({ selectedDate, onSelectDate, maxDaysInFutur
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Generate an array of dates from today up to maxDaysInFuture
-  const dates = Array.from({ length: maxDaysInFuture }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const dates = useMemo(() => {
+    return Array.from({ length: maxDaysInFuture }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+  }, [maxDaysInFuture]);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

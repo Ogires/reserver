@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 type Service = {
   id: string;
   name: string;
@@ -40,11 +42,15 @@ export function ServiceSelector({ services, onSelectService, selectedServiceId }
           >
             <div className="flex items-start gap-4">
               {service.imageUrl && (
-                <img 
-                  src={service.imageUrl} 
-                  alt={service.name} 
-                  className="w-16 h-16 rounded-xl object-cover shrink-0 border border-zinc-200 dark:border-zinc-800 shadow-sm"
-                />
+                <div className="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                  <Image 
+                    src={service.imageUrl} 
+                    alt={service.name} 
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                </div>
               )}
               <div className="flex flex-col">
                 <span className={`text-base font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-zinc-900 dark:text-zinc-100'}`}>
