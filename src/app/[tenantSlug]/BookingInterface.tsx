@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ServiceSelector } from '../components/ServiceSelector';
 import { BookingGrid } from '../components/BookingGrid';
+import { PremiumDateSelector } from '../components/PremiumDateSelector';
 import { getAvailableSlotsAction, submitBookingAction } from '../actions/bookingActions';
 
 type Service = { id: string; name: string; durationMinutes: number; price: number; currency: string; };
@@ -14,6 +15,12 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  
+  // Customer Details Form State
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -57,8 +64,17 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
     fetchSlots();
   }, [selectedServiceId, selectedDate, tenantId, services]);
 
-  const handleBookingSubmit = async () => {
-    if (!selectedServiceId || !selectedSlot) return;
+  const handleBookingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedServiceId || !selectedSlot) {
+      setError('Please select a service and a time slot.');
+      return;
+    }
+    if (!customerName || !customerEmail) {
+      setError('Please provide your name and email.');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -67,17 +83,18 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
       formData.append('tenantId', tenantId);
       formData.append('tenantSlug', tenantSlug);
       formData.append('serviceId', selectedServiceId);
-      formData.append('customerId', 'c1-mocked-customer');
+      // We will pass the raw customer info for the backend to process/create
+      formData.append('customerName', customerName);
+      formData.append('customerEmail', customerEmail);
+      formData.append('customerPhone', customerPhone);
       formData.append('startTime', selectedSlot);
 
-      // In real scenario, this redirects to Stripe.
-      // If Stripe fails or isn't fully configured, it will simulate success.
+      // In a real scenario, this redirects to Stripe or creates the booking and then redirects.
       await submitBookingAction(formData);
       
-      // We shouldn't reach here if redirect happens, but just in case:
-      alert('Booking initiated!');
+      alert('Booking initiated! Redirecting to payment...');
     } catch (err: any) {
-      setError('An error occurred during booking.');
+      setError('An error occurred during booking. Please try again.');
       setSubmitting(false);
     }
   };
@@ -134,15 +151,12 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
           </div>
           
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 shadow-sm border border-zinc-200 dark:border-zinc-800">
-            {/* Simple Date Picker */}
-            <div className="mb-8">
-              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Select Date</label>
-              <input 
-                type="date" 
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                className="w-full md:w-auto px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white"
+            {/* Premium Date Picker */}
+            <div className="mb-8 overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-2">
+              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 px-4 pt-2">Select Date</label>
+              <PremiumDateSelector 
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
               />
             </div>
 
@@ -167,27 +181,78 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
           </div>
         </section>
 
-        {error && (
-          <div className="p-4 rounded-xl bg-red-50 text-red-600 border border-red-200">
-            {error}
-          </div>
-        )}
+        {/* Step 3: Customer Details (Revealed when slot is selected) */}
+        <div className={`transition-all duration-500 overflow-hidden ${selectedSlot ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
+          <section className="pt-8">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-sm">3</div>
+              <h2 className="text-xl font-bold">Your Details</h2>
+            </div>
+            
+            <form onSubmit={handleBookingSubmit} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 shadow-sm border border-zinc-200 dark:border-zinc-800 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Full Name *</label>
+                  <input 
+                    id="name"
+                    type="text" 
+                    required
+                    value={customerName}
+                    onChange={e => setCustomerName(e.target.value)}
+                    placeholder="Jane Doe"
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder:text-zinc-400"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Email Address *</label>
+                  <input 
+                    id="email"
+                    type="email" 
+                    required
+                    value={customerEmail}
+                    onChange={e => setCustomerEmail(e.target.value)}
+                    placeholder="jane@example.com"
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder:text-zinc-400"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="phone" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Phone Number (Optional)</label>
+                <input 
+                  id="phone"
+                  type="tel" 
+                  value={customerPhone}
+                  onChange={e => setCustomerPhone(e.target.value)}
+                  placeholder="+1 (555) 000-0000"
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder:text-zinc-400"
+                />
+                <p className="text-xs text-zinc-500 mt-1">We'll only use this for important booking updates.</p>
+              </div>
 
-        {/* Action Area */}
-        <div className="pt-4 flex justify-end">
-          <button
-            onClick={handleBookingSubmit}
-            disabled={!selectedSlot || submitting}
-            className={`
-              px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all duration-300
-              ${!selectedSlot || submitting 
-                ? 'bg-zinc-300 dark:bg-zinc-800 text-zinc-500 cursor-not-allowed shadow-none' 
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-105 hover:shadow-indigo-500/40'
-              }
-            `}
-          >
-            {submitting ? 'Confirming...' : 'Continue to Payment'}
-          </button>
+              {error && (
+                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                  {error}
+                </div>
+              )}
+
+              <div className="pt-4 flex justify-end border-t border-zinc-100 dark:border-zinc-800 mt-8">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className={`
+                    w-full md:w-auto px-8 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-indigo-500/20 transition-all duration-300
+                    ${submitting 
+                      ? 'bg-indigo-400 dark:bg-indigo-800 text-white cursor-wait shadow-none' 
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white hover:scale-[1.02] hover:shadow-indigo-500/40'
+                    }
+                  `}
+                >
+                  {submitting ? 'Processing...' : 'Continue to Payment'}
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
 
       </div>

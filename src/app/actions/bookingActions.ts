@@ -45,17 +45,57 @@ export async function submitBookingAction(formData: FormData) {
   const tenantId = formData.get('tenantId') as string;
   const tenantSlug = formData.get('tenantSlug') as string;
   const serviceId = formData.get('serviceId') as string;
-  const customerId = formData.get('customerId') as string; // Usually from an auth session
+  
+  // New Customer Form Details
+  const customerName = formData.get('customerName') as string;
+  const customerEmail = formData.get('customerEmail') as string;
+  const customerPhone = formData.get('customerPhone') as string;
   const startTimeIso = formData.get('startTime') as string;
 
-  if (!tenantId || !serviceId || !customerId || !startTimeIso) {
+  if (!tenantId || !serviceId || !customerName || !customerEmail || !startTimeIso) {
     return { error: 'Missing required fields' };
   }
 
   let bookingId: string | undefined;
   let service: any;
+  let customerId: string | undefined;
+
+  // Supabase Client for DB operations (Customer resolution + Notifications)
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   try {
+    // 1. Resolve or Create Customer
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('email', customerEmail)
+      .single();
+
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+    } else {
+      const { data: newCustomer, error: customerErr } = await supabase
+        .from('customers')
+        .insert({
+          tenant_id: tenantId,
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone || null
+        })
+        .select('id')
+        .single();
+
+      if (customerErr || !newCustomer) throw new Error('Failed to create customer record');
+      customerId = newCustomer.id;
+    }
+
+    // 2. Create Booking
+    if (!customerId) throw new Error('Failed to resolve customer context');
+    
     const startTime = new Date(startTimeIso);
     const booking = await createBooking.execute(tenantId, serviceId, customerId, startTime);
     bookingId = booking.id;
@@ -98,10 +138,6 @@ export async function submitBookingAction(formData: FormData) {
 
   // If no Stripe integration activated or free service
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
     // Fetch customer details including email and telegram ID
     const { data: customer } = await supabase.from('customers').select('email, telegram_chat_id').eq('id', customerId).single();
     // Fetch tenant to see if they have a telegram chat ID

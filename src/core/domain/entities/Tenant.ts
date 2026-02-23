@@ -20,6 +20,8 @@ export interface Tenant {
   notifyTelegramConfirmations?: boolean;
   notifyEmailReminders?: boolean;
   notifyTelegramReminders?: boolean;
+  reminderTemplateBody?: string | null;
+  reminderTemplateSubject?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
