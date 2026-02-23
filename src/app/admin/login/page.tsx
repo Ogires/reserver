@@ -1,4 +1,5 @@
 import { login, signup } from '../actions';
+import { SocialLoginButton } from '../../../components/auth/SocialLoginButton';
 
 interface LoginPageProps {
   searchParams: Promise<{
@@ -48,6 +49,21 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         )}
 
         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/60 p-8 rounded-2xl shadow-2xl">
+          
+          {/* Social Login Section */}
+          <div className="mb-6">
+            <SocialLoginButton provider="google" />
+            
+            <div className="mt-6 relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-800"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-slate-900 text-slate-500">Or continue with email</span>
+              </div>
+            </div>
+          </div>
+
           <form className="space-y-6">
             
             <div className="space-y-2">
