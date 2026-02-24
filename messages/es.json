@@ -1,0 +1,26 @@
+{
+  "Booking": {
+    "title": "Bienvenido a {tenantName}",
+    "description": "Reserva tu cita online. Selecciona un servicio y encuentra la hora perfecta que mejor se adapte a ti.",
+    "footerRights": "Todos los derechos reservados.",
+    "step1Service": "Seleccionar Servicio",
+    "step2DateTime": "Elegir Fecha y Hora",
+    "step3Details": "Tus Datos",
+    "noServices": "No hay servicios disponibles para este negocio.",
+    "selectDate": "Seleccionar Fecha",
+    "availableTimes": "Horas Disponibles",
+    "noAvailabilityTitle": "Sin disponibilidad",
+    "noAvailabilityDesc": "No quedan huecos disponibles para esta fecha. Por favor, selecciona otro día.",
+    "fullName": "Nombre Completo *",
+    "email": "Correo Electrónico *",
+    "phoneLabel": "Teléfono (Opcional)",
+    "phoneDesc": "Solo usaremos este número para actualizaciones importantes de tu reserva.",
+    "btnProcessing": "Procesando...",
+    "btnContinuePayment": "Continuar al Pago",
+    "btnConfirming": "Confirmando...",
+    "errMissingFields": "Por favor, selecciona un servicio y un hueco horario.",
+    "errMissingContact": "Por favor, introduce tu nombre y email.",
+    "errGeneral": "Ocurrió un error al reservar. Por favor inténtalo de nuevo.",
+    "successAlert": "¡Reserva iniciada! Redirigiendo al pago..."
+  }
+}

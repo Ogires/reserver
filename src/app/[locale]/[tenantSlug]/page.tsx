@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { getTranslations } from 'next-intl/server';
 import BookingInterface from './BookingInterface';
 
 interface TenantPageProps {
@@ -7,6 +8,9 @@ interface TenantPageProps {
 
 export default async function TenantPage({ params }: TenantPageProps) {
   const { tenantSlug } = await params;
+  const t = await getTranslations('Booking');
+  
+  const tenantName = tenantSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   // In a real app, we would fetch the exact Tenant ID and Services from DB here.
   // For the sake of the TFM demonstration before full DB seeding, we mock the initial data.
@@ -49,10 +53,10 @@ export default async function TenantPage({ params }: TenantPageProps) {
           {tenantSlug.charAt(0).toUpperCase()}
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">
-          {tenantSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+          {t('title', { tenantName })}
         </h1>
         <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl leading-relaxed">
-          Book your appointment online. Select a service and find the perfect time that works for you.
+          {t('description')}
         </p>
       </header>
 
@@ -70,7 +74,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
       {/* Powered by Footer */}
       <footer className="w-full border-t border-zinc-200 dark:border-zinc-800 py-8 mt-12 bg-zinc-100 dark:bg-zinc-900/50">
         <div className="max-w-4xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-zinc-500 dark:text-zinc-500 text-sm">
-          <p>© {new Date().getFullYear()} {tenantSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {tenantName}. {t('footerRights')}</p>
           <a href="/" className="mt-4 md:mt-0 flex items-center hover:text-indigo-500 transition-colors">
             <span className="bg-gradient-to-br from-indigo-500 to-purple-500 w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white mr-2">R</span>
             Powered by Reserver

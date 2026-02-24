@@ -1,10 +1,12 @@
 'use client';
 
 import Image from 'next/image';
+import { useLocale } from 'next-intl';
 
 type Service = {
   id: string;
   name: string;
+  nameTranslatable?: Record<string, string>;
   description?: string;
   imageUrl?: string | null;
   durationMinutes: number;
@@ -19,6 +21,8 @@ interface ServiceSelectorProps {
 }
 
 export function ServiceSelector({ services, onSelectService, selectedServiceId }: ServiceSelectorProps) {
+  const locale = useLocale();
+  
   if (services.length === 0) {
     return <p className="text-zinc-500 italic">No services available for this tenant.</p>;
   }
@@ -54,7 +58,7 @@ export function ServiceSelector({ services, onSelectService, selectedServiceId }
               )}
               <div className="flex flex-col">
                 <span className={`text-base font-semibold ${isSelected ? 'text-indigo-900 dark:text-indigo-100' : 'text-zinc-900 dark:text-zinc-100'}`}>
-                  {service.name}
+                  {service.nameTranslatable?.[locale] || service.name}
                 </span>
                 {service.description && (
                   <span className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
@@ -68,7 +72,7 @@ export function ServiceSelector({ services, onSelectService, selectedServiceId }
             </div>
             
             <div className={`mt-2 sm:mt-0 text-lg font-bold shrink-0 ${isSelected ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-900 dark:text-zinc-100'}`}>
-              {new Intl.NumberFormat('en-US', { style: 'currency', currency: service.currency }).format(service.price)}
+              {new Intl.NumberFormat(locale, { style: 'currency', currency: service.currency }).format(service.price)}
             </div>
           </button>
         );

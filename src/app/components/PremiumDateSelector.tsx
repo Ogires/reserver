@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useMemo } from 'react';
+import { useLocale } from 'next-intl';
 
 interface PremiumDateSelectorProps {
   selectedDate: string;
@@ -10,6 +11,7 @@ interface PremiumDateSelectorProps {
 
 export function PremiumDateSelector({ selectedDate, onSelectDate, maxDaysInFuture = 60 }: PremiumDateSelectorProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const locale = useLocale();
 
   // Generate an array of dates from today up to maxDaysInFuture
   const dates = useMemo(() => {
@@ -20,8 +22,8 @@ export function PremiumDateSelector({ selectedDate, onSelectDate, maxDaysInFutur
     });
   }, [maxDaysInFuture]);
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const fWeekday = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+  const fMonth = new Intl.DateTimeFormat(locale, { month: 'short' });
 
   // Scroll active date into view on mount
   useEffect(() => {
@@ -58,13 +60,13 @@ export function PremiumDateSelector({ selectedDate, onSelectDate, maxDaysInFutur
               `}
             >
               <span className={`text-xs uppercase font-medium tracking-wider mb-1 ${isSelected ? 'text-indigo-100' : 'text-zinc-500'}`}>
-                {days[date.getDay()]}
+                {fWeekday.format(date)}
               </span>
               <span className={`text-2xl font-bold tracking-tighter ${isSelected ? 'text-white' : 'text-zinc-900 dark:text-white'}`}>
                 {date.getDate()}
               </span>
               <span className={`text-[10px] font-semibold uppercase tracking-widest mt-1 ${isSelected ? 'text-indigo-200' : 'text-zinc-400'}`}>
-                {months[date.getMonth()]}
+                {fMonth.format(date)}
               </span>
             </button>
           );

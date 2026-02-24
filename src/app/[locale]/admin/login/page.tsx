@@ -1,5 +1,5 @@
 import { login, signup } from '../actions';
-import { SocialLoginButton } from '../../../components/auth/SocialLoginButton';
+import { SocialLoginButton } from '../../../../components/auth/SocialLoginButton';
 
 interface LoginPageProps {
   searchParams: Promise<{

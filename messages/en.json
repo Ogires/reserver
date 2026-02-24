@@ -1,0 +1,26 @@
+{
+  "Booking": {
+    "title": "Welcome to {tenantName}",
+    "description": "Book your appointment online. Select a service and find the perfect time that works for you.",
+    "footerRights": "All rights reserved.",
+    "step1Service": "Select Service",
+    "step2DateTime": "Choose Date & Time",
+    "step3Details": "Your Details",
+    "noServices": "No services available for this tenant.",
+    "selectDate": "Select Date",
+    "availableTimes": "Available Times",
+    "noAvailabilityTitle": "No availability",
+    "noAvailabilityDesc": "There are no available slots for this date. Please select another day.",
+    "fullName": "Full Name *",
+    "email": "Email Address *",
+    "phoneLabel": "Phone Number (Optional)",
+    "phoneDesc": "We'll only use this for important booking updates.",
+    "btnProcessing": "Processing...",
+    "btnContinuePayment": "Continue to Payment",
+    "btnConfirming": "Confirming...",
+    "errMissingFields": "Please select a service and a time slot.",
+    "errMissingContact": "Please provide your name and email.",
+    "errGeneral": "An error occurred during booking. Please try again.",
+    "successAlert": "Booking initiated! Redirecting to payment..."
+  }
+}

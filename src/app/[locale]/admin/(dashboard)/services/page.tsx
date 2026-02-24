@@ -1,5 +1,5 @@
 import { requireTenant } from '../../utils';
-import { createClient } from '../../../../utils/supabase/server';
+import { createClient } from '../../../../../utils/supabase/server';
 import { createService } from './actions';
 import ServiceListItem from './ServiceListItem';
 

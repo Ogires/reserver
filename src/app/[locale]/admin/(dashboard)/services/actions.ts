@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '../../../../utils/supabase/server';
+import { createClient } from '../../../../../utils/supabase/server';
 import { requireTenant } from '../../utils';
 import { revalidatePath } from 'next/cache';
 

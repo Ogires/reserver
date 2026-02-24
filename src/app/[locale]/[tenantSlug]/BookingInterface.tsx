@@ -1,15 +1,18 @@
 'use client';
 
 import { useState, useEffect, useTransition } from 'react';
-import { ServiceSelector } from '../components/ServiceSelector';
-import { BookingGrid } from '../components/BookingGrid';
-import { PremiumDateSelector } from '../components/PremiumDateSelector';
-import { getAvailableSlotsAction, submitBookingAction } from '../actions/bookingActions';
+import { useTranslations } from 'next-intl';
+import { ServiceSelector } from '../../components/ServiceSelector';
+import { BookingGrid } from '../../components/BookingGrid';
+import { PremiumDateSelector } from '../../components/PremiumDateSelector';
+import { getAvailableSlotsAction, submitBookingAction } from '../../actions/bookingActions';
 
 type Service = { id: string; name: string; durationMinutes: number; price: number; currency: string; };
 type Slot = { startTime: string; endTime: string; available: boolean; };
 
 export default function BookingInterface({ tenantId, tenantSlug, services }: { tenantId: string, tenantSlug: string, services: Service[] }) {
+  const t = useTranslations('Booking');
+  
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -67,11 +70,11 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedServiceId || !selectedSlot) {
-      setError('Please select a service and a time slot.');
+      setError(t('errMissingFields'));
       return;
     }
     if (!customerName || !customerEmail) {
-      setError('Please provide your name and email.');
+      setError(t('errMissingContact'));
       return;
     }
 
@@ -91,9 +94,9 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
         // In a real scenario, this redirects to Stripe or creates the booking and then redirects.
         await submitBookingAction(formData);
         
-        alert('Booking initiated! Redirecting to payment...');
+        alert(t('successAlert'));
       } catch (err: any) {
-        setError('An error occurred during booking. Please try again.');
+        setError(t('errGeneral'));
       }
     });
   };
@@ -131,7 +134,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
         <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-sm">1</div>
-            <h2 className="text-xl font-bold">Select Service</h2>
+            <h2 className="text-xl font-bold">{t('step1Service')}</h2>
           </div>
           <ServiceSelector 
             services={services} 
@@ -146,13 +149,13 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
         <section>
           <div className="flex items-center gap-3 mb-5">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-sm">2</div>
-            <h2 className="text-xl font-bold">Choose Date & Time</h2>
+            <h2 className="text-xl font-bold">{t('step2DateTime')}</h2>
           </div>
           
           <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 shadow-sm border border-zinc-200 dark:border-zinc-800">
             {/* Premium Date Picker */}
             <div className="mb-8 overflow-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-2">
-              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 px-4 pt-2">Select Date</label>
+              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4 px-4 pt-2">{t('selectDate')}</label>
               <PremiumDateSelector 
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
@@ -161,7 +164,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
 
             {/* Time Slots Grid */}
             <div>
-              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4">Available Times</label>
+              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-4">{t('availableTimes')}</label>
               {loadingSlots ? (
                 <div className="animate-pulse flex space-x-4">
                   <div className="flex-1 space-y-4 py-1">
@@ -185,13 +188,13 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
           <section className="pt-8">
             <div className="flex items-center gap-3 mb-5">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold text-sm">3</div>
-              <h2 className="text-xl font-bold">Your Details</h2>
+              <h2 className="text-xl font-bold">{t('step3Details')}</h2>
             </div>
             
             <form onSubmit={handleBookingSubmit} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 md:p-8 shadow-sm border border-zinc-200 dark:border-zinc-800 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Full Name *</label>
+                  <label htmlFor="name" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('fullName')}</label>
                   <input 
                     id="name"
                     type="text" 
@@ -203,7 +206,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Email Address *</label>
+                  <label htmlFor="email" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('email')}</label>
                   <input 
                     id="email"
                     type="email" 
@@ -217,7 +220,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="phone" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">Phone Number (Optional)</label>
+                <label htmlFor="phone" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t('phoneLabel')}</label>
                 <input 
                   id="phone"
                   type="tel" 
@@ -226,7 +229,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
                   placeholder="+1 (555) 000-0000"
                   className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder:text-zinc-400"
                 />
-                <p className="text-xs text-zinc-500 mt-1">We'll only use this for important booking updates.</p>
+                <p className="text-xs text-zinc-500 mt-1">{t('phoneDesc')}</p>
               </div>
 
               {error && (
@@ -247,7 +250,7 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
                     }
                   `}
                 >
-                  {isPending ? 'Processing...' : 'Continue to Payment'}
+                  {isPending ? t('btnProcessing') : t('btnContinuePayment')}
                 </button>
               </div>
             </form>
