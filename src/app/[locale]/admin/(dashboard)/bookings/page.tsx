@@ -1,12 +1,18 @@
 import { requireTenant } from '../../utils';
 import { createClient } from '../../../../../utils/supabase/server';
+import BookingRowActions from './BookingRowActions';
+import BookingFilters from './BookingFilters';
 
-export default async function BookingsPage() {
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function BookingsPage({ searchParams }: Props) {
+  const params = await searchParams;
   const { tenant } = await requireTenant();
   const supabase = await createClient();
 
-  // Fetch upcoming bookings for this tenant (joining services and customers)
-  const { data: rawBookings } = await supabase
+  let query = supabase
     .from('bookings')
     .select(`
       id,
@@ -14,11 +20,42 @@ export default async function BookingsPage() {
       end_time,
       status,
       payment_status,
-      services ( name_translatable ),
-      customers ( full_name, email, phone )
+      services!inner ( name_translatable ),
+      customers!inner ( full_name, email, phone )
     `)
-    .eq('tenant_id', tenant.id)
-    .order('start_time', { ascending: true }); // Ideally we'd filter > now()
+    .eq('tenant_id', tenant.id);
+
+  // Apply Filters
+  if (params.q && typeof params.q === 'string') {
+    query = query.ilike('customers.full_name', `%${params.q}%`);
+  }
+
+  if (params.status && params.status !== 'all' && typeof params.status === 'string') {
+    query = query.eq('status', params.status);
+  }
+
+  if (params.date && params.date !== 'all') {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(tomorrow);
+    dayAfter.setDate(dayAfter.getDate() + 1);
+
+    if (params.date === 'today') {
+      query = query.gte('start_time', today.toISOString()).lt('start_time', tomorrow.toISOString());
+    } else if (params.date === 'tomorrow') {
+      query = query.gte('start_time', tomorrow.toISOString()).lt('start_time', dayAfter.toISOString());
+    } else if (params.date === 'upcoming') {
+      query = query.gte('start_time', today.toISOString());
+    } else if (params.date === 'past') {
+      query = query.lt('start_time', today.toISOString());
+    }
+  }
+
+  query = query.order('start_time', { ascending: params.date === 'past' ? false : true });
+
+  const { data: rawBookings } = await query;
 
   const bookings = rawBookings as any[] || [];
 
@@ -29,6 +66,8 @@ export default async function BookingsPage() {
         <h1 className="text-3xl font-extrabold text-white tracking-tight">Bookings Overview</h1>
         <p className="text-slate-400 mt-2">View and manage appointments made by your customers.</p>
       </div>
+
+      <BookingFilters />
 
       <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/60 rounded-3xl overflow-hidden shadow-2xl">
         {bookings.length === 0 ? (
@@ -53,6 +92,7 @@ export default async function BookingsPage() {
                   <th className="px-6 py-4 font-semibold">Service</th>
                   <th className="px-6 py-4 font-semibold">Status</th>
                   <th className="px-6 py-4 font-semibold text-right">Payment</th>
+                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40">
@@ -93,6 +133,9 @@ export default async function BookingsPage() {
                         }`}>
                           {booking.payment_status.replace('_', ' ')}
                         </span>
+                      </td>
+                      <td className="px-6 py-5 whitespace-nowrap text-right">
+                        <BookingRowActions booking={booking} />
                       </td>
                     </tr>
                   );

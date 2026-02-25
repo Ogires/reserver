@@ -59,6 +59,7 @@ export async function submitBookingAction(formData: FormData) {
   let bookingId: string | undefined;
   let service: any;
   let customerId: string | undefined;
+  let managementToken: string | undefined;
 
   // Supabase Client for DB operations (Customer resolution + Notifications)
   const supabase = createClient(
@@ -99,6 +100,17 @@ export async function submitBookingAction(formData: FormData) {
     const startTime = new Date(startTimeIso);
     const booking = await createBooking.execute(tenantId, serviceId, customerId, startTime);
     bookingId = booking.id;
+
+    // Fetch the generated management token
+    const { data: bookingData } = await supabase
+      .from('bookings')
+      .select('management_token')
+      .eq('id', bookingId)
+      .single();
+    
+    if (bookingData) {
+      managementToken = bookingData.management_token;
+    }
 
     // Fetch service info for Stripe details
     service = await repository.getServiceById(serviceId);
@@ -149,11 +161,15 @@ export async function submitBookingAction(formData: FormData) {
     if (customer?.email && service && bookingId) {
       if (tenantDetails?.notifyEmailConfirmations !== false) {
         const emailService = new ResendEmailService(process.env.RESEND_API_KEY);
+        const manageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/en/${tenantSlug}/booking/${bookingId}/manage?token=${managementToken}`;
+
         notificationPromises.push(
           emailService.sendEmail(
             customer.email,
             'Booking Confirmed',
-            `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>`
+            `<p>Your booking for <strong>${service.nameTranslatable['es'] || 'Service'}</strong> has been confirmed.</p>
+             <p>If you need to cancel or manage this appointment, please visit: <br/> 
+             <a href="${manageUrl}">Manage my booking</a></p>`
           )
         );
       }
