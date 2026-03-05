@@ -24,7 +24,7 @@ export default function AppleIcon() {
           fontWeight: 900,
           letterSpacing: '-0.05em',
         }}>
-          BK
+          N
         </div>
       </div>
     ),
