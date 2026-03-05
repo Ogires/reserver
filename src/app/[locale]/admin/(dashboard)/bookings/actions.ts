@@ -23,15 +23,18 @@ export async function updateBookingStatus(bookingId: string, status: 'confirmed'
     throw new Error(error.message);
   }
 
-  // --- Send Notifications ---
+  // --- Send Notifications & Sync Calendar ---
   try {
     const { data: bookingDetails } = await supabase
       .from('bookings')
       .select(`
         id,
+        status,
         start_time,
+        end_time,
+        external_event_id,
         services ( name_translatable ),
-        customers ( email, full_name, telegram_chat_id )
+        customers ( id, email, full_name, telegram_chat_id )
       `)
       .eq('id', bookingId)
       .single();
@@ -45,6 +48,32 @@ export async function updateBookingStatus(bookingId: string, status: 'confirmed'
 
       const serviceName = serviceData?.name_translatable?.['es'] || 'Service';
       const notificationPromises = [];
+
+      // Google Calendar Sync
+      try {
+        const { GoogleCalendarAdapter } = await import('../../../../../infrastructure/calendar/GoogleCalendarAdapter');
+        const calendarAdapter = new GoogleCalendarAdapter();
+        
+        if (status === 'confirmed') {
+          const bookingForCalendar = {
+            id: bookingDetails.id,
+            status: bookingDetails.status,
+            customerId: customerData?.id,
+            startTime: new Date(bookingDetails.start_time),
+            endTime: new Date(bookingDetails.end_time)
+          } as any;
+          
+          const externalEventId = await calendarAdapter.createEvent(tenant.id, bookingForCalendar);
+          if (externalEventId) {
+             await supabase.from('bookings').update({ external_event_id: externalEventId }).eq('id', bookingId);
+          }
+        } else if (status === 'cancelled' && bookingDetails.external_event_id) {
+          await calendarAdapter.deleteEvent(tenant.id, bookingDetails.external_event_id);
+          await supabase.from('bookings').update({ external_event_id: null }).eq('id', bookingId);
+        }
+      } catch (calErr) {
+        console.error('Failed to sync with Google Calendar:', calErr);
+      }
 
       // Email Notification to Customer
       if (customerData?.email && tenantDetails?.notifyEmailConfirmations !== false) {
@@ -75,7 +104,7 @@ export async function updateBookingStatus(bookingId: string, status: 'confirmed'
       await Promise.allSettled(notificationPromises);
     }
   } catch (err) {
-    console.error('Failed to send status update notifications:', err);
+    console.error('Failed to send status update notifications or sync calendar:', err);
     // Don't throw, the status was already updated successfully
   }
 

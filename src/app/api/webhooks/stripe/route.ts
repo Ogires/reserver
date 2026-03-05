@@ -54,6 +54,26 @@ export async function POST(req: NextRequest) {
         
         console.log(`Successfully marked booking ${bookingId} as Paid via Stripe Webhook`);
 
+        // Push to Google Calendar
+        try {
+          const { GoogleCalendarAdapter } = await import('../../../../infrastructure/calendar/GoogleCalendarAdapter');
+          const calendarAdapter = new GoogleCalendarAdapter();
+          const bookingForCalendar = {
+            id: updatedBooking.id,
+            status: updatedBooking.status,
+            customerId: updatedBooking.customer_id,
+            startTime: new Date(updatedBooking.start_time),
+            endTime: new Date(updatedBooking.end_time)
+          } as any;
+          
+          const externalEventId = await calendarAdapter.createEvent(updatedBooking.tenant_id, bookingForCalendar);
+          if (externalEventId) {
+             await supabase.from('bookings').update({ external_event_id: externalEventId }).eq('id', bookingId);
+          }
+        } catch (calError) {
+          console.error('Failed to push to Google Calendar:', calError);
+        }
+
         // Send Confirmation Email
         const customerEmail = updatedBooking.customers?.email;
         const customerTelegramId = updatedBooking.customers?.telegram_chat_id;

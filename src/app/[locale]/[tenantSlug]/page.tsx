@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import BookingInterface from './BookingInterface';
 
 interface TenantPageProps {
@@ -44,6 +46,38 @@ export default async function TenantPage({ params }: TenantPageProps) {
     },
   ];
 
+  // Check if a B2C customer is logged in
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll() {} // Read-only in Server Components
+      }
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  let initialCustomer = null;
+
+  if (user) {
+    const { data: customerData } = await supabase
+      .from('customers')
+      .select('full_name, email, phone')
+      .eq('auth_id', user.id)
+      .single();
+    
+    if (customerData) {
+      initialCustomer = {
+        fullName: customerData.full_name,
+        email: customerData.email,
+        phone: customerData.phone
+      };
+    }
+  }
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans selection:bg-indigo-200 dark:selection:bg-indigo-900">
       
@@ -67,6 +101,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
             tenantId={mockTenantId}
             tenantSlug={tenantSlug}
             services={mockServices}
+            initialCustomer={initialCustomer}
           />
         </Suspense>
       </main>

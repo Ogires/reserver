@@ -145,6 +145,7 @@ export class SupabaseBookingRepository implements IBookingRepository {
         status: booking.status,
         payment_status: booking.paymentStatus,
         stripe_payment_intent_id: booking.stripePaymentIntentId,
+        external_event_id: booking.externalEventId || null,
         confirmation_sent_at: booking.confirmationSentAt?.toISOString() || null,
         reminder_sent_at: booking.reminderSentAt?.toISOString() || null
       })
@@ -179,6 +180,7 @@ export class SupabaseBookingRepository implements IBookingRepository {
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.paymentStatus !== undefined) dbUpdates.payment_status = updates.paymentStatus;
     if (updates.stripePaymentIntentId !== undefined) dbUpdates.stripe_payment_intent_id = updates.stripePaymentIntentId;
+    if (updates.externalEventId !== undefined) dbUpdates.external_event_id = updates.externalEventId;
     if (updates.confirmationSentAt !== undefined) dbUpdates.confirmation_sent_at = updates.confirmationSentAt?.toISOString() || null;
     if (updates.reminderSentAt !== undefined) dbUpdates.reminder_sent_at = updates.reminderSentAt?.toISOString() || null;
 
@@ -209,6 +211,7 @@ export class SupabaseBookingRepository implements IBookingRepository {
       status: row.status as BookingStatus,
       paymentStatus: row.payment_status as PaymentStatus,
       stripePaymentIntentId: row.stripe_payment_intent_id,
+      externalEventId: row.external_event_id,
       confirmationSentAt: row.confirmation_sent_at ? new Date(row.confirmation_sent_at) : undefined,
       reminderSentAt: row.reminder_sent_at ? new Date(row.reminder_sent_at) : undefined,
       createdAt: new Date(row.created_at),

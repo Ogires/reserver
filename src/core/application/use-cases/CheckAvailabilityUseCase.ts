@@ -1,4 +1,5 @@
 import { IBookingRepository } from '../ports/IBookingRepository';
+import { ICalendarProvider, TimeBlock } from '../ports/out/ICalendarProvider';
 import { Booking } from '../../domain/entities/Booking';
 
 export interface TimeSlot {
@@ -8,7 +9,10 @@ export interface TimeSlot {
 }
 
 export class CheckAvailabilityUseCase {
-  constructor(private readonly bookingRepository: IBookingRepository) {}
+  constructor(
+    private readonly bookingRepository: IBookingRepository,
+    private readonly calendarProvider?: ICalendarProvider
+  ) {}
 
   public async execute(
     tenantId: string,
@@ -72,6 +76,21 @@ export class CheckAvailabilityUseCase {
     // 4. Fetch Bookings for Date
     const bookings = await this.bookingRepository.getBookingsByDate(tenantId, requestedDate);
 
+    // Fetch Google Calendar Busy Blocks
+    let busyBlocks: TimeBlock[] = [];
+    if (this.calendarProvider) {
+      const startOfDay = new Date(requestedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(requestedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      try {
+        busyBlocks = await this.calendarProvider.getBusyBlocks(tenantId, startOfDay, endOfDay);
+      } catch (err) {
+        console.error('Failed to get calendar busy blocks:', err);
+      }
+    }
+
     // 5. Generate and Filter Slots
     const availableSlots: TimeSlot[] = [];
     
@@ -82,7 +101,9 @@ export class CheckAvailabilityUseCase {
     for (const block of timeBlocks) {
       const allSlots = this.generateSlots(requestedDate, block.openTime, block.closeTime, intervalMinutes, durationMinutes);
       const openSlots = allSlots.filter(slot => 
-        slot.startTime >= minTime && !this.isOverlapping(slot, bookings)
+        slot.startTime >= minTime && 
+        !this.isOverlapping(slot, bookings) &&
+        !this.isOverlappingBusy(slot, busyBlocks)
       );
       availableSlots.push(...openSlots.map(s => ({ ...s, available: true })));
     }
@@ -134,6 +155,12 @@ export class CheckAvailabilityUseCase {
     return bookings.some(booking => {
       if (booking.status === 'cancelled') return false;
       return slot.startTime < booking.endTime && slot.endTime > booking.startTime;
+    });
+  }
+
+  private isOverlappingBusy(slot: { startTime: Date, endTime: Date }, busyBlocks: TimeBlock[]): boolean {
+    return busyBlocks.some(busy => {
+      return slot.startTime < busy.end && slot.endTime > busy.start;
     });
   }
 }

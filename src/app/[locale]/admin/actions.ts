@@ -75,6 +75,17 @@ export async function onboardTenant(formData: FormData): Promise<void> {
   const currency = formData.get('currency') as string;
   const slotIntervalMinutes = parseInt(formData.get('slot_interval_minutes') as string, 10);
 
+  // Prevent users from taking system routes as their tenant slug
+  const reservedSlugs = [
+    'admin', 'api', 'auth', 'portal', 'system', 'static', 'public', 
+    'dashboard', 'login', 'register', 'pricing', 'about', 'contact',
+    'en', 'es', 'de', 'fr' // locales just in case
+  ];
+  
+  if (reservedSlugs.includes(slug.toLowerCase())) {
+    redirect(`/admin/onboarding?error=${encodeURIComponent(`The URL "${slug}" is a reserved system name and cannot be used.`)}`);
+  }
+
   const { error } = await supabase
     .from('tenants')
     .insert({

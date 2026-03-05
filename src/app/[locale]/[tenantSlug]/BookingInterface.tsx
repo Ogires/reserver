@@ -9,8 +9,19 @@ import { getAvailableSlotsAction, submitBookingAction } from '../../actions/book
 
 type Service = { id: string; name: string; durationMinutes: number; price: number; currency: string; };
 type Slot = { startTime: string; endTime: string; available: boolean; };
+type InitialCustomer = { fullName: string; email: string; phone?: string | null; } | null;
 
-export default function BookingInterface({ tenantId, tenantSlug, services }: { tenantId: string, tenantSlug: string, services: Service[] }) {
+export default function BookingInterface({ 
+  tenantId, 
+  tenantSlug, 
+  services,
+  initialCustomer = null 
+}: { 
+  tenantId: string, 
+  tenantSlug: string, 
+  services: Service[],
+  initialCustomer?: InitialCustomer 
+}) {
   const t = useTranslations('Booking');
   
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
@@ -20,9 +31,9 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
   const [loadingSlots, setLoadingSlots] = useState(false);
   
   // Customer Details Form State
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerName, setCustomerName] = useState(initialCustomer?.fullName || '');
+  const [customerEmail, setCustomerEmail] = useState(initialCustomer?.email || '');
+  const [customerPhone, setCustomerPhone] = useState(initialCustomer?.phone || '');
   
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
@@ -211,10 +222,11 @@ export default function BookingInterface({ tenantId, tenantSlug, services }: { t
                     id="email"
                     type="email" 
                     required
+                    readOnly={!!initialCustomer}
                     value={customerEmail}
                     onChange={e => setCustomerEmail(e.target.value)}
                     placeholder="jane@example.com"
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder:text-zinc-400"
+                    className={`w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all dark:text-white placeholder:text-zinc-400 ${initialCustomer ? 'opacity-70 cursor-not-allowed' : ''}`}
                   />
                 </div>
               </div>

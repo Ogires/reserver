@@ -6,13 +6,15 @@ import { SupabaseBookingRepository } from '../../infrastructure/database/supabas
 import { StripePaymentService } from '../../infrastructure/payments/stripe/StripePaymentService';
 import { ResendEmailService } from '../../infrastructure/notifications/resend/ResendEmailService';
 import { TelegramService } from '../../infrastructure/notifications/telegram/TelegramService';
+import { GoogleCalendarAdapter } from '../../infrastructure/calendar/GoogleCalendarAdapter';
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 // Initialize dependencies
 const repository = new SupabaseBookingRepository();
-const checkAvailability = new CheckAvailabilityUseCase(repository);
+const calendarAdapter = new GoogleCalendarAdapter();
+const checkAvailability = new CheckAvailabilityUseCase(repository, calendarAdapter);
 const createBooking = new CreateBookingUseCase(repository, checkAvailability);
 const stripeService = new StripePaymentService();
 
@@ -57,9 +59,11 @@ export async function submitBookingAction(formData: FormData) {
   }
 
   let bookingId: string | undefined;
-  let service: any;
   let customerId: string | undefined;
   let managementToken: string | undefined;
+  
+  // Rule 1.3: Start independent fetches early to prevent waterfalls
+  const servicePromise = repository.getServiceById(serviceId);
 
   // Supabase Client for DB operations (Customer resolution + Notifications)
   const supabase = createClient(
@@ -68,11 +72,10 @@ export async function submitBookingAction(formData: FormData) {
   );
 
   try {
-    // 1. Resolve or Create Customer
+    // 1. Resolve or Create Global Customer
     const { data: existingCustomer } = await supabase
       .from('customers')
       .select('id')
-      .eq('tenant_id', tenantId)
       .eq('email', customerEmail)
       .single();
 
@@ -82,8 +85,7 @@ export async function submitBookingAction(formData: FormData) {
       const { data: newCustomer, error: customerErr } = await supabase
         .from('customers')
         .insert({
-          tenant_id: tenantId,
-          name: customerName,
+          full_name: customerName,
           email: customerEmail,
           phone: customerPhone || null
         })
@@ -112,8 +114,9 @@ export async function submitBookingAction(formData: FormData) {
       managementToken = bookingData.management_token;
     }
 
-    // Fetch service info for Stripe details
-    service = await repository.getServiceById(serviceId);
+    // Now await the service info that started fetching earlier
+    // eslint-disable-next-line no-var
+    var service = await servicePromise;
   } catch (error: any) {
     console.error('Booking creation failed in DB:', error.message);
     return { error: 'Failed to create booking' };
