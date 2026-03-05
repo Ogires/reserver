@@ -16,7 +16,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
               R
             </div>
-            <span className="text-xl font-bold tracking-tight">Reserver</span>
+            <span className="text-xl font-bold tracking-tight">Nexturno</span>
           </div>
           <div className="flex items-center space-x-4">
             <Link 

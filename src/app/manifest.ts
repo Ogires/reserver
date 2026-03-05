@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Booking System',
-    short_name: 'Bookings',
-    description: 'Modern reservation system for businesses',
+    name: 'Nexturno',
+    short_name: 'Nexturno',
+    description: 'El Rey de las Reservas - Plataforma integral para tu negocio',
     start_url: '/',
     display: 'standalone',
     background_color: '#020617', // slate-950

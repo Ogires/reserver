@@ -112,7 +112,7 @@ export default async function TenantPage({ params }: TenantPageProps) {
           <p>© {new Date().getFullYear()} {tenantName}. {t('footerRights')}</p>
           <a href="/" className="mt-4 md:mt-0 flex items-center hover:text-indigo-500 transition-colors">
             <span className="bg-gradient-to-br from-indigo-500 to-purple-500 w-4 h-4 rounded flex items-center justify-center text-[8px] font-bold text-white mr-2">R</span>
-            Powered by Reserver
+            Powered by Nexturno
           </a>
         </div>
       </footer>

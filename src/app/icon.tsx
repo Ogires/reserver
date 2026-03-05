@@ -46,7 +46,7 @@ export default function Icon({ id }: { id: string }) {
           letterSpacing: '-0.05em',
           textShadow: isSmall ? 'none' : '0 8px 16px rgba(0,0,0,0.5)',
         }}>
-          BK
+          N
         </div>
       </div>
     ),

@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center space-x-2 mb-6">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-sky-400 shadow-[0_0_20px_rgba(99,102,241,0.4)]" />
-            <span className="text-xl font-bold tracking-tight text-white">Bookable</span>
+            <span className="text-xl font-bold tracking-tight text-white">Nexturno</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
             Welcome back
