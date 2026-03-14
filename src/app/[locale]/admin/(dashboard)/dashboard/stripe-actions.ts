@@ -13,7 +13,7 @@ export async function createStripeConnectAccount() {
   const { tenant } = await requireTenant();
   const supabase = await createClient();
 
-  let stripeAccountId = tenant.stripeAccountId;
+  let stripeAccountId = tenant.stripe_account_id;
 
   // 1. Create a Connect Account if the Tenant doesn't have one yet
   if (!stripeAccountId) {
@@ -52,7 +52,7 @@ export async function createStripeConnectAccount() {
                  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
   const returnUrl = `${appUrl}/api/stripe/connect/return`;
-  const refreshUrl = `${appUrl}/admin/dashboard`;
+  const refreshUrl = `${appUrl}/es/admin/dashboard`;
 
   const accountLink = await stripe.accountLinks.create({
     account: stripeAccountId,

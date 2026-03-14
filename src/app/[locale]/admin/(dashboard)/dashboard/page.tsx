@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
           </div>
           
           <div className="shrink-0">
-            {tenant.stripeOnboardingComplete ? (
+            {tenant.stripe_onboarding_complete ? (
               <div className="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

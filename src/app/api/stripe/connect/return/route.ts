@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/es/admin/login', request.url));
     }
 
     // Identify which Tenant they own
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!tenant || !tenant.stripe_account_id) {
-      return NextResponse.redirect(new URL('/admin/dashboard?error=notenant', request.url));
+      return NextResponse.redirect(new URL('/es/admin/dashboard?error=notenant', request.url));
     }
 
     // Verify with Stripe API if they actually finished onboarding
@@ -36,13 +36,13 @@ export async function GET(request: NextRequest) {
         .update({ stripe_onboarding_complete: true })
         .eq('id', tenant.id);
 
-      return NextResponse.redirect(new URL('/admin/dashboard?success=stripe_connected', request.url));
+      return NextResponse.redirect(new URL('/es/admin/dashboard?success=stripe_connected', request.url));
     } else {
-      return NextResponse.redirect(new URL('/admin/dashboard?error=stripe_incomplete', request.url));
+      return NextResponse.redirect(new URL('/es/admin/dashboard?error=stripe_incomplete', request.url));
     }
 
   } catch (error) {
     console.error('Stripe Connect Return Error:', error);
-    return NextResponse.redirect(new URL('/admin/dashboard?error=stripe_server_error', request.url));
+    return NextResponse.redirect(new URL('/es/admin/dashboard?error=stripe_server_error', request.url));
   }
 }
