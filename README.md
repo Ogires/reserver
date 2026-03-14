@@ -132,9 +132,9 @@ Infrastructure Layer (Supabase, Stripe, Resend, Google Calendar)
 ### Testing
 | Herramienta | Propósito |
 |---|---|
-| **Vitest** | Tests unitarios (casos de uso del dominio) |
-| **Playwright** | Tests end-to-end (flujo de reserva) |
-| **Testing Library** | Tests de componentes React |
+| **Vitest** | Tests unitarios (core del dominio, casos de uso `>90% coverage`, repositorios y adaptadores). |
+| **Playwright** | Tests End-to-End (flujos de reserva pública, login corporativo y onboarding de tenants). |
+| **Testing Library** | Tests de componentes React. |
 
 ### Lenguaje
 - **TypeScript 5** — Tipado estricto en todo el proyecto
@@ -203,13 +203,13 @@ La aplicación estará disponible en [http://localhost:3003](http://localhost:30
 ## 🧪 Testing
 
 ```bash
-# Tests unitarios (Vitest)
-npx vitest run
+# Tests unitarios con coverage report (Application & Infrastructure)
+npx vitest run --coverage --exclude e2e
 
-# Tests E2E (Playwright)
+# Tests E2E (Flujos de Booking, Login y Onboarding)
 npx playwright test
 
-# Tests con UI de Vitest
+# Tests Unitarios con interfaz gráfica (UI)
 npx vitest --ui
 ```
 
