@@ -103,7 +103,16 @@ export default function BookingInterface({
         formData.append('startTime', selectedSlot);
 
         // In a real scenario, this redirects to Stripe or creates the booking and then redirects.
-        await submitBookingAction(formData);
+        const result = await submitBookingAction(formData);
+        
+        if (result && result.error) {
+          if (result.error === 'STRIPE_NOT_CONFIGURED') {
+            setError(t('errStripeNotConfigured'));
+          } else {
+            setError(result.error || t('errGeneral'));
+          }
+          return;
+        }
         
         alert(t('successAlert'));
       } catch (err: any) {

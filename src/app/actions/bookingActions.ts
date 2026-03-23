@@ -147,7 +147,20 @@ export async function submitBookingAction(formData: FormData) {
       }
     }
   } catch (error: any) {
+    if (error?.message === 'NEXT_REDIRECT' || error?.digest?.startsWith('NEXT_REDIRECT')) {
+      throw error;
+    }
     console.error('Stripe checkout failed', error);
+
+    // If there is no Stripe API configuration or auth fails, throw a recognizable error
+    if (
+      !process.env.STRIPE_SECRET_KEY || 
+      error.type === 'StripeAuthenticationError' ||
+      (error.message && error.message.includes('API key'))
+    ) {
+      return { error: 'STRIPE_NOT_CONFIGURED' };
+    }
+
     return { error: 'Failed to initiate checkout.' };
   }
 

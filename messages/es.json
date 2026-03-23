@@ -21,6 +21,7 @@
     "errMissingFields": "Por favor, selecciona un servicio y un hueco horario.",
     "errMissingContact": "Por favor, introduce tu nombre y email.",
     "errGeneral": "Ocurrió un error al reservar. Por favor inténtalo de nuevo.",
+    "errStripeNotConfigured": "No hay configuración para la plataforma de pagos. Por favor, contacte con el negocio.",
     "successAlert": "¡Reserva iniciada! Redirigiendo al pago..."
   }
 }

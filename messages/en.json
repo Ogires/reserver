@@ -21,6 +21,7 @@
     "errMissingFields": "Please select a service and a time slot.",
     "errMissingContact": "Please provide your name and email.",
     "errGeneral": "An error occurred during booking. Please try again.",
+    "errStripeNotConfigured": "There is no configuration for the payment platform. Please contact the business.",
     "successAlert": "Booking initiated! Redirecting to payment..."
   }
 }
